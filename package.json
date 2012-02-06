@@ -1,0 +1,20 @@
+{
+  "name": "gcstats",
+  "description": "Get some data about how V8's GC is behaving within your node program .",
+  "version": "0.0.1",
+  "author": "Lloyd Hilaiel (http://lloyd.io)",
+  "engines": { "node": ">= 0.6.0" },
+  "repository": {
+        "type": "git",
+        "url": "https://github.com/lloydncb000gt/gcstats.git"
+   },
+   "licenses": [ { "type": "wtfpl" } ],
+   "bugs": {
+     "url" : "https://github.com/lloyd/gcstats/issues"
+   },
+   "scripts": {
+     "install": "make build"
+   },
+   "contributors": [
+   ]
+}
