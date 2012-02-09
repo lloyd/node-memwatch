@@ -8,6 +8,7 @@
         "type": "git",
         "url": "https://github.com/lloydncb000gt/gcstats.git"
    },
+  "main": "include.js",
    "licenses": [ { "type": "wtfpl" } ],
    "bugs": {
      "url" : "https://github.com/lloyd/gcstats/issues"

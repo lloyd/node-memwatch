@@ -1,17 +1,22 @@
 const
-gcstats = require('./include.js');
+gcstats = require('./include.js'),
+fs = require('fs');
 
 var startTime = new Date();
 
+var filename = "data_" + (process.env['LEAK'] ? "leak" : "noleak");
+
+var memoryFile = fs.createWriteStream(filename + "_mem.txt");
+var trendFile = fs.createWriteStream(filename + "_trend.txt");
+
 gcstats.on('gc', function(e) {
   if (e.compacted) {
-    console.log("BA", ((new Date() - startTime) / 1000.0).toFixed(1) + "," + gcstats.stats().current_base);
-    console.log("GC", ((new Date() - startTime) / 1000.0).toFixed(1) + "," + gcstats.stats().usage_trend);
+    trendFile.write(((new Date() - startTime) / 1000.0).toFixed(1) + " " + gcstats.stats().usage_trend + "\n");
   }
 });
 
 setInterval(function() {
-  console.log("TM", ((new Date() - startTime) / 1000.0).toFixed(1) + "," + process.memoryUsage().heapUsed);
+  memoryFile.write(((new Date() - startTime) / 1000.0).toFixed(1) + " " + process.memoryUsage().heapUsed + "\n");
 }, 2000);
 
 process.on('exit', function() {
@@ -25,12 +30,15 @@ var j = 0;
 var leaked = [];
 
 function doIt() {
-  if (j++ >= 100) return;
+  if ((new Date() - startTime) > 180 * 1000) process.exit(0);
   var f = [];
+  var notleaked = [];
   for (var i = 0; i < 100000; i++) {
     f.push(JSON.parse(json));
     // there's a 1 in 10000 chance of leaking
-    if (Math.random() > .9999) leaked.push(JSON.parse(json));
+    if (Math.random() > .9999) {
+      (process.env['LEAK'] ? leaked : notleaked).push(JSON.parse(json));
+    }
   }
   setTimeout(function() {
     doIt();
