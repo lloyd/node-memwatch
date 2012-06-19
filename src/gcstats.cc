@@ -14,18 +14,47 @@ using namespace node;
 Handle<Object> g_context;
 Handle<Function> g_cb;
 
+struct Baton {
+    uv_work_t req;
+    size_t heapUsage;
+    GCType type;
+    GCCallbackFlags flags;
+};
+
+static void AsyncGCStatsAfter(uv_work_t* request) {
+    HandleScope scope;
+
+    Baton * b = (Baton *) request->data;
+
+    if (!g_cb.IsEmpty()) {
+        Handle<Value> argv[3];
+        argv[0] = String::New(b->type == kGCTypeMarkSweepCompact ? "full" : "incremental");
+        argv[1] = Boolean::New(b->flags == kGCCallbackFlagCompacted);
+        argv[2] = Number::New(b->heapUsage);
+        g_cb->Call(g_context, 3, argv);
+    }
+
+    delete b;
+
+    scope.Close(Undefined());
+}
+
 static void after_gc(GCType type, GCCallbackFlags flags)
 {
-    // This is a gc epilog collback and we're calling back into javascript.
-    // This must result in the allocation of ojbects, and can't really be safe.
     HandleScope scope;
+
+    Baton * baton = new Baton;
+    v8::HeapStatistics hs;
+
+    v8::V8::GetHeapStatistics(&hs);
+
+    baton->heapUsage = hs.used_heap_size();
+    baton->type = type;
+    baton->flags = flags;
+    baton->req.data = (void *) baton;
     
-    if (!g_cb.IsEmpty()) {
-        Handle<Value> argv[2];
-        argv[0] = String::New(type == kGCTypeMarkSweepCompact ? "full" : "incremental");
-        argv[1] = Boolean::New(flags == kGCCallbackFlagCompacted);
-        g_cb->Call(g_context, 2, argv);
-    }
+    uv_queue_work(uv_default_loop(), &(baton->req), NULL, AsyncGCStatsAfter);
+
     scope.Close(Undefined());
 }
 
@@ -44,18 +73,10 @@ Handle<Value> trigger_gc(const Arguments& args) {
     return scope.Close(Undefined());
 }
 
-/*
-static void before_gc(GCType type, GCCallbackFlags flags)
-{
-    printf("before_gc\n");
-}
-*/
-
 extern "C" void init(Handle<Object> target) {
     HandleScope scope;
     NODE_SET_METHOD(target, "upon_gc", upon_gc);
     NODE_SET_METHOD(target, "gc", trigger_gc);
     
-//    V8::AddGCPrologueCallback(before_gc);
     V8::AddGCEpilogueCallback(after_gc);
 };

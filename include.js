@@ -35,11 +35,11 @@ function min(a, b) {
 }
 
 
-GCStats.prototype._on_gc = function(type, compacted) {
+GCStats.prototype._on_gc = function(type, compacted, heapUsed) {
   if (type === 'full') this._gc_full++;
-  else this._gc_incremental++;
+  else this._gc_incremental++; 
   if (compacted) {
-    this._last_base = process.memoryUsage().heapUsed;
+    this._last_base = heapUsed;
 
     // the first ten compactions we'll use a different algorithm to
     // dampen out wider memory fluctuation at startup
@@ -80,10 +80,7 @@ GCStats.prototype._on_gc = function(type, compacted) {
     this._gc_compaction++;
   }
 
-  var self = this;
-  process.nextTick(function() {
-    self.emit((type === 'full') ? 'gc' : 'gc_incremental', { compacted: compacted });  
-  });
+  this.emit((type === 'full') ? 'gc' : 'gc_incremental', { compacted: compacted });  
 };
 
 GCStats.prototype.stats = function() {
@@ -103,6 +100,6 @@ GCStats.prototype.gc = magic.gc;
 
 module.exports = new GCStats();
 
-magic.upon_gc(function(type, compacted) {
-  module.exports._on_gc(type, compacted);
+magic.upon_gc(function(type, compacted, heapUsed) {
+  module.exports._on_gc(type, compacted, heapUsed);
 });
