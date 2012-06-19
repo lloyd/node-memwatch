@@ -99,7 +99,12 @@ GCStats.prototype.stats = function() {
   };
 };
 
-GCStats.prototype.gc = magic.gc;
+GCStats.prototype.gc = function() {
+  var t = new Date();
+  magic.gc();
+  t = new Date() - t;
+  console.log(t, "ms");
+};
 
 module.exports = new GCStats();
 

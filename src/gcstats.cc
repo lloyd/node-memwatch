@@ -43,11 +43,11 @@ Handle<Value> upon_gc(const Arguments& args) {
 Handle<Value> trigger_gc(const Arguments& args) {
     HandleScope scope;
     while(!V8::IdleNotification()) {};
-
+/*
     v8::HeapProfiler::DeleteAllSnapshots();
     const v8::HeapSnapshot * hs = v8::HeapProfiler::TakeSnapshot(v8::String::New(""));
     std::cout << "nodes in snapshot " << hs->GetNodesCount() << std::endl;
-
+*/
     return scope.Close(Undefined());
 }
 
