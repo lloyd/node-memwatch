@@ -39,10 +39,6 @@ GCStats.prototype._on_gc = function(type, compacted) {
   if (type === 'full') this._gc_full++;
   else this._gc_incremental++;
   if (compacted) {
-    // let's see if this leaks!
-    var foo = [];
-    for (var i = 0; i < 10000; i++) foo.push(i.toString());
-
     this._last_base = process.memoryUsage().heapUsed;
 
     // the first ten compactions we'll use a different algorithm to
