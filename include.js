@@ -79,8 +79,11 @@ GCStats.prototype._on_gc = function(type, compacted) {
     }
     this._gc_compaction++;
   }
-    
-  this.emit((type === 'full') ? 'gc' : 'gc_incremental', { compacted: compacted });  
+
+  var self = this;
+  process.nextTick(function() {
+    self.emit((type === 'full') ? 'gc' : 'gc_incremental', { compacted: compacted });  
+  });
 };
 
 GCStats.prototype.stats = function() {
@@ -95,6 +98,8 @@ GCStats.prototype.stats = function() {
     max: this._base_max
   };
 };
+
+GCStats.prototype.gc = magic.gc;
 
 module.exports = new GCStats();
 

@@ -38,6 +38,12 @@ Handle<Value> upon_gc(const Arguments& args) {
     return scope.Close(Undefined());
 }
 
+Handle<Value> trigger_gc(const Arguments& args) {
+    HandleScope scope;
+    while(!V8::IdleNotification()) {};
+    return scope.Close(Undefined());
+}
+
 /*
 static void before_gc(GCType type, GCCallbackFlags flags)
 {
@@ -48,6 +54,7 @@ static void before_gc(GCType type, GCCallbackFlags flags)
 extern "C" void init(Handle<Object> target) {
     HandleScope scope;
     NODE_SET_METHOD(target, "upon_gc", upon_gc);
+    NODE_SET_METHOD(target, "gc", trigger_gc);
     
 //    V8::AddGCPrologueCallback(before_gc);
     V8::AddGCEpilogueCallback(after_gc);
