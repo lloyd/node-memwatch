@@ -1,17 +1,19 @@
 const
-magic = require('./build/Release/gcstats');
-
-console.log(1);
+magic = require('./build/Release/gcstats'),
+url = require('url');
 
 var hd = new magic.HeapDiff();
 
-var arr = [];
-for (var i = 0; i < 100; i++) {
-  var str = "another string " +  i.toString();
-  arr.push(str);
+function LeakingClass() {
 }
 
-console.log(JSON.stringify(hd.end(), null, 4));
+var arr = [];
+for (var i = 0; i < 100; i++) {
+  arr.push(new LeakingClass);
+}
+
+var hd = hd.end();
+console.log(JSON.stringify(hd, null, 4));
 
 hd = null;
 

@@ -109,12 +109,18 @@ compare(const v8::HeapSnapshot * before, const v8::HeapSnapshot * after)
     map<string, int> bAllocByName, aAllocByName;
     set<uint64_t> seen;
     countAllocationsByName(&bAllocByName, &seen, before->GetRoot());
+    seen.clear();
+    countAllocationsByName(&aAllocByName, &seen, after->GetRoot());
+
     o->Set(String::New("nodes_manual_count"), Integer::New(seen.size()));    
 
     // interate and print
     Local<Object> byName = Object::New();
-    for (map<string,int>::iterator it = bAllocByName.begin(); it != bAllocByName.end(); it++) {
-        byName.Set(String::New(it->first.c_str()), Integer::New(it->second));        
+    for (map<string,int>::iterator it = aAllocByName.begin();
+         it != aAllocByName.end(); it++)
+    {
+        byName->Set(String::New(it->first.c_str()), Integer::New(it->second)
+);        
     }
     o->Set(String::New("by_name"), byName);
 
