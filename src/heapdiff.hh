@@ -5,6 +5,8 @@
 #ifndef __HEADDIFF_H
 #define __HEADDIFF_H
 
+#include <v8.h>
+#include <v8-profiler.h>
 #include <node.h>
 
 namespace heapdiff 
@@ -21,6 +23,8 @@ namespace heapdiff
         HeapDiff();
         ~HeapDiff();
       private:
+        const v8::HeapSnapshot * before;
+        const v8::HeapSnapshot * after;
     };
 };
 
