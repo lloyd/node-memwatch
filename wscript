@@ -25,6 +25,8 @@ def build(bld):
   gcstats.target = "gcstats"
   gcstats.source = """
     src/gcstats.cc
+    src/heapdiff.cc
+    src/init.cc
   """
 
 def test(t):

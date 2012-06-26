@@ -8,6 +8,8 @@
 #include <string>
 #include <cstring>
 
+#include "gcstats.hh"
+
 using namespace v8;
 using namespace node;
 
@@ -39,7 +41,7 @@ static void AsyncGCStatsAfter(uv_work_t* request) {
     scope.Close(Undefined());
 }
 
-static void after_gc(GCType type, GCCallbackFlags flags)
+void gcstats::after_gc(GCType type, GCCallbackFlags flags)
 {
     HandleScope scope;
 
@@ -58,7 +60,7 @@ static void after_gc(GCType type, GCCallbackFlags flags)
     scope.Close(Undefined());
 }
 
-Handle<Value> upon_gc(const Arguments& args) {
+Handle<Value> gcstats::upon_gc(const Arguments& args) {
     HandleScope scope;
     if (args.Length() >= 1 && args[0]->IsFunction()) {
         g_cb = Persistent<Function>::New(Handle<Function>::Cast(args[0]));
@@ -67,16 +69,8 @@ Handle<Value> upon_gc(const Arguments& args) {
     return scope.Close(Undefined());
 }
 
-Handle<Value> trigger_gc(const Arguments& args) {
+Handle<Value> gcstats::trigger_gc(const Arguments& args) {
     HandleScope scope;
     while(!V8::IdleNotification()) {};
     return scope.Close(Undefined());
 }
-
-extern "C" void init(Handle<Object> target) {
-    HandleScope scope;
-    NODE_SET_METHOD(target, "upon_gc", upon_gc);
-    NODE_SET_METHOD(target, "gc", trigger_gc);
-    
-    V8::AddGCEpilogueCallback(after_gc);
-};
