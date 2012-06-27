@@ -2,12 +2,12 @@
  * 2012|lloyd|http://wtfpl.org
  */
 
-#ifndef __GCSTATS_HH
-#define __GCSTATS_HH
+#ifndef __MEMWATCH_HH
+#define __MEMWATCH_HH
 
 #include <node.h>
 
-namespace gcstats
+namespace memwatch
 {
     v8::Handle<v8::Value> upon_gc(const v8::Arguments& args);
     v8::Handle<v8::Value> trigger_gc(const v8::Arguments& args);

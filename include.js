@@ -1,5 +1,5 @@
 const
-magic = require('./build/Release/gcstats'),
+magic = require('./build/Release/memwatch'),
 events = require('events'),
 util = require('util');
 
@@ -99,6 +99,8 @@ GCStats.prototype.stats = function() {
 GCStats.prototype.gc = magic.gc;
 
 module.exports = new GCStats();
+
+module.exports.HeapDiff = magic.HeapDiff;
 
 magic.upon_gc(function(type, compacted, heapUsed) {
   module.exports._on_gc(type, compacted, heapUsed);

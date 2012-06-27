@@ -1,21 +1,22 @@
 {
-  "name": "gcstats",
-  "description": "Get some data about how V8's GC is behaving within your node program .",
-  "version": "0.0.1",
+  "name": "memwatch",
+  "description": "Keep an eye on your memory usage, and discover and isolate leaks.",
+  "version": "0.1.0",
   "author": "Lloyd Hilaiel (http://lloyd.io)",
   "engines": { "node": ">= 0.6.0" },
   "repository": {
         "type": "git",
-        "url": "https://github.com/lloydncb000gt/gcstats.git"
+        "url": "https://github.com/lloyd/memwatch.git"
    },
   "main": "include.js",
    "licenses": [ { "type": "wtfpl" } ],
    "bugs": {
-     "url" : "https://github.com/lloyd/gcstats/issues"
+     "url" : "https://github.com/lloyd/memwatch/issues"
    },
    "scripts": {
      "install": "make build"
    },
    "contributors": [
+     "Jed Parsons (@jedp)"
    ]
 }

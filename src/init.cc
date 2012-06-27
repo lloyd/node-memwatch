@@ -6,7 +6,7 @@
 #include <node.h>
 
 #include "heapdiff.hh"
-#include "gcstats.hh"
+#include "memwatch.hh"
 
 extern "C" {
     void init (v8::Handle<v8::Object> target)
@@ -14,11 +14,11 @@ extern "C" {
         v8::HandleScope scope;
         heapdiff::HeapDiff::Initialize(target);
 
-        NODE_SET_METHOD(target, "upon_gc", gcstats::upon_gc);
-        NODE_SET_METHOD(target, "gc", gcstats::trigger_gc);
+        NODE_SET_METHOD(target, "upon_gc", memwatch::upon_gc);
+        NODE_SET_METHOD(target, "gc", memwatch::trigger_gc);
 
-        v8::V8::AddGCEpilogueCallback(gcstats::after_gc);
+        v8::V8::AddGCEpilogueCallback(memwatch::after_gc);
     }
 
-    NODE_MODULE(gcstats, init);
+    NODE_MODULE(memwatch, init);
 };

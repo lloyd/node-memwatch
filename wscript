@@ -22,9 +22,9 @@ def configure(conf):
 def build(bld):
   gcstats = bld.new_task_gen("cxx", "shlib", "node_addon")
   gcstats.cxxflags =  [ "-O3" ]
-  gcstats.target = "gcstats"
+  gcstats.target = "memwatch"
   gcstats.source = """
-    src/gcstats.cc
+    src/memwatch.cc
     src/heapdiff.cc
     src/init.cc
   """

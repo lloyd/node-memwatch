@@ -1,7 +1,7 @@
 // a trivial process that does nothing except
 // trigger GC and output the present base memory
 // usage every second.  this example is intended to
-// demonstrate that gcstats itself does not leak.
+// demonstrate that memwatch itself does not leak.
 
 var http = require('http');
 
@@ -10,7 +10,7 @@ function msFromStart() {
   return new Date() - start;
 }
 
-var gcstats = require('../');
+var memwatch = require('../');
 
 var leak = [];
 
@@ -47,9 +47,9 @@ doHTTPRequest();
 doHTTPRequest();
 
 // report to console postgc heap size
-gcstats.on('gc', function(d) {
+memwatch.on('gc', function(d) {
   if (d.compacted) {
-    console.log("postgc:", msFromStart(), gcstats.stats().current_base);
+    console.log("postgc:", msFromStart(), memwatch.stats().current_base);
   }
 });
 

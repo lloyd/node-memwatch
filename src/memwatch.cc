@@ -8,7 +8,7 @@
 #include <string>
 #include <cstring>
 
-#include "gcstats.hh"
+#include "memwatch.hh"
 
 using namespace v8;
 using namespace node;
@@ -23,7 +23,7 @@ struct Baton {
     GCCallbackFlags flags;
 };
 
-static void AsyncGCStatsAfter(uv_work_t* request) {
+static void AsyncMemwatchAfter(uv_work_t* request) {
     HandleScope scope;
 
     Baton * b = (Baton *) request->data;
@@ -41,7 +41,7 @@ static void AsyncGCStatsAfter(uv_work_t* request) {
     scope.Close(Undefined());
 }
 
-void gcstats::after_gc(GCType type, GCCallbackFlags flags)
+void memwatch::after_gc(GCType type, GCCallbackFlags flags)
 {
     HandleScope scope;
 
@@ -55,12 +55,12 @@ void gcstats::after_gc(GCType type, GCCallbackFlags flags)
     baton->flags = flags;
     baton->req.data = (void *) baton;
     
-    uv_queue_work(uv_default_loop(), &(baton->req), NULL, AsyncGCStatsAfter);
+    uv_queue_work(uv_default_loop(), &(baton->req), NULL, AsyncMemwatchAfter);
 
     scope.Close(Undefined());
 }
 
-Handle<Value> gcstats::upon_gc(const Arguments& args) {
+Handle<Value> memwatch::upon_gc(const Arguments& args) {
     HandleScope scope;
     if (args.Length() >= 1 && args[0]->IsFunction()) {
         g_cb = Persistent<Function>::New(Handle<Function>::Cast(args[0]));
@@ -69,7 +69,7 @@ Handle<Value> gcstats::upon_gc(const Arguments& args) {
     return scope.Close(Undefined());
 }
 
-Handle<Value> gcstats::trigger_gc(const Arguments& args) {
+Handle<Value> memwatch::trigger_gc(const Arguments& args) {
     HandleScope scope;
     while(!V8::IdleNotification()) {};
     return scope.Close(Undefined());
