@@ -10,6 +10,7 @@ function LeakingClass() {
 var arr = [];
 for (var i = 0; i < 100; i++) {
   arr.push(new LeakingClass);
+  arr.push((new LeakingClass).toString() + i);
 }
 
 var hd = hd.end();
