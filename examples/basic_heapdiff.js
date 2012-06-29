@@ -2,15 +2,21 @@ const
 memwatch = require('..'),
 url = require('url');
 
-var hd = new memwatch.HeapDiff();
-
 function LeakingClass() {
 }
 
-var arr = [];
-for (var i = 0; i < 100; i++) {
-  arr.push(new LeakingClass);
-  arr.push((new LeakingClass).toString() + i);
-}
+memwatch.gc();
 
-console.log(JSON.stringify(hd.end(), null, 4));
+var arr = [];
+
+var hd = new memwatch.HeapDiff();
+
+for (var i = 0; i < 10000; i++) arr.push(new LeakingClass);
+
+var hde = hd.end();
+
+console.log(JSON.stringify(hde, null, 2));
+
+
+
+

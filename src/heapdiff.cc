@@ -20,6 +20,15 @@ using namespace v8;
 using namespace node;
 using namespace std;
 
+static bool s_inProgress = false;
+
+bool heapdiff::HeapDiff::InProgress() 
+{
+    return s_inProgress;
+}
+
+        
+
 heapdiff::HeapDiff::HeapDiff() : ObjectWrap(), before(NULL), after(NULL)
 {
 }
@@ -61,7 +70,9 @@ heapdiff::HeapDiff::New (const v8::Arguments& args)
     self->Wrap(args.This());
 
     // take a snapshot and save a pointer to it
+    s_inProgress = true;
     self->before = v8::HeapProfiler::TakeSnapshot(v8::String::New(""));
+    s_inProgress = false;
 
     return args.This();
 }
@@ -83,6 +94,13 @@ buildIDSet(set<uint64_t> * seen, const HeapGraphNode* cur)
     if (seen->find(cur->GetId()) != seen->end()) {
         return;
     }
+    // always ignore HeapDiff related memory
+    if (cur->GetType() == HeapGraphNode::kObject &&
+        handleToStr(cur->GetName()).compare("HeapDiff") == 0)
+    {
+        return;
+    }
+
     seen->insert(cur->GetId());
     
     for (int i=0; i < cur->GetChildrenCount(); i++) {
@@ -285,7 +303,9 @@ v8::Handle<Value>
 heapdiff::HeapDiff::End( const Arguments& args )
 {
     // take another snapshot and compare them
+    s_inProgress = true;
     const v8::HeapSnapshot * after = v8::HeapProfiler::TakeSnapshot(v8::String::New(""));
+    s_inProgress = false;
 
     v8::HandleScope scope;
 

@@ -1,6 +1,9 @@
 /*
- * 2012|lloyd|do what the fuck you want to
+ * 2012|lloyd|http://wtfpl.org
  */
+
+#include "memwatch.hh"
+#include "heapdiff.hh"
 
 #include <node.h>
 #include <node_version.h>
@@ -8,7 +11,9 @@
 #include <string>
 #include <cstring>
 
-#include "memwatch.hh"
+#include <math.h> // for pow
+
+#include <iostream>
 
 using namespace v8;
 using namespace node;
@@ -23,26 +28,120 @@ struct Baton {
     GCCallbackFlags flags;
 };
 
+static const unsigned int RECENT_PERIOD = 10;
+static const unsigned int ANCIENT_PERIOD = 120;
+
+static struct 
+{
+    // counts of different types of gc events
+    unsigned int gc_full;
+    unsigned int gc_inc;
+    unsigned int gc_compact;
+
+    // last base heap size as measured *right* after GC
+    unsigned int last_base;
+    
+    // the estimated "base memory" usage of the javascript heap
+    // over the RECENT_PERIOD number of GC runs
+    unsigned int base_recent;
+
+    // the estimated "base memory" usage of the javascript heap
+    // over the ANCIENT_PERIOD number of GC runs
+    unsigned int base_ancient;
+
+    // the most extreme values we've seen for base heap size
+    unsigned int base_max;
+    unsigned int base_min;
+} s_stats;
+    
+
 static void AsyncMemwatchAfter(uv_work_t* request) {
     HandleScope scope;
 
     Baton * b = (Baton *) request->data;
 
-    if (!g_cb.IsEmpty()) {
-        Handle<Value> argv[3];
-        argv[0] = String::New(b->type == kGCTypeMarkSweepCompact ? "full" : "incremental");
-        argv[1] = Boolean::New(b->flags == kGCCallbackFlagCompacted);
-        argv[2] = Number::New(b->heapUsage);
-        g_cb->Call(g_context, 3, argv);
+    // do the math in C++, permanent
+    // record the type of GC event that occured
+    if (b->type == kGCTypeMarkSweepCompact) s_stats.gc_full++;
+    else s_stats.gc_inc++;
+
+    if (b->flags == kGCCallbackFlagCompacted) {
+        s_stats.last_base = b->heapUsage;
+
+        s_stats.gc_compact++;
+        
+        // the first ten compactions we'll use a different algorithm to
+        // dampen out wider memory fluctuation at startup
+        if (s_stats.gc_compact < RECENT_PERIOD) {
+            double decay = pow(s_stats.gc_compact / RECENT_PERIOD, 2.5);
+            decay *= s_stats.gc_compact;
+            if (isinf(decay) || isnan(decay)) decay = 0;
+            s_stats.base_recent = ((s_stats.base_recent * decay) +
+                                   s_stats.last_base) / (decay + 1);
+
+            decay = pow(s_stats.gc_compact / RECENT_PERIOD, 2.4);
+            decay *= s_stats.gc_compact;
+            s_stats.base_ancient = ((s_stats.base_ancient * decay) +
+                                    s_stats.last_base) /  (1 + decay);
+
+        } else {
+            s_stats.base_recent = ((s_stats.base_recent * (RECENT_PERIOD - 1)) +
+                                   s_stats.last_base) / RECENT_PERIOD;
+            double decay = fmin(ANCIENT_PERIOD, s_stats.gc_compact);
+            s_stats.base_ancient = ((s_stats.base_ancient * (decay - 1)) +
+                                    s_stats.last_base) / decay;
+        }
+
+        // only record min/max after 3 gcs to let initial instability settle
+        if (s_stats.gc_compact >= 3) {
+            if (!s_stats.base_min || s_stats.base_min > s_stats.last_base) {
+                s_stats.base_min = s_stats.last_base;
+            }
+
+            if (!s_stats.base_max || s_stats.base_max < s_stats.last_base) {
+                s_stats.base_max = s_stats.last_base;
+            }
+        }
+        
+        // if there are any listeners, it's time to emit!
+        if (!g_cb.IsEmpty()) {        
+            Handle<Value> argv[2];
+            // magic argument to indicate to the callback all we want to know is whether there are
+            // listeners
+            argv[0] = Boolean::New(true);
+            Handle<Value> haveListeners = g_cb->Call(g_context, 1, argv);
+
+            if (haveListeners->BooleanValue()) {
+                double ut= 0.0;
+                if (s_stats.base_ancient) {
+                    ut = (double) round(((double) (s_stats.base_recent - s_stats.base_ancient) /
+                                         (double) s_stats.base_ancient) * 1000.0) / 10.0;
+                }
+
+                // ok, there are listeners, we actually must serialize and emit this stats event
+                Local<Object> stats = Object::New();
+                stats->Set(String::New("num_full_gc"), Integer::New(s_stats.gc_full));
+                stats->Set(String::New("num_inc_gc"), Integer::New(s_stats.gc_inc));
+                stats->Set(String::New("heap_compactions"), Integer::New(s_stats.gc_compact));
+                stats->Set(String::New("usage_trend"), Number::New(ut));
+                stats->Set(String::New("estimated_base"), Integer::New(s_stats.base_recent));
+                stats->Set(String::New("current_base"), Integer::New(s_stats.last_base));
+                stats->Set(String::New("min"), Integer::New(s_stats.base_min));
+                stats->Set(String::New("max"), Integer::New(s_stats.base_max));
+                argv[0] = Boolean::New(false);
+                argv[1] = stats;
+                g_cb->Call(g_context, 2, argv);
+            }
+        }
     }
 
     delete b;
-
-    scope.Close(Undefined());
 }
 
 void memwatch::after_gc(GCType type, GCCallbackFlags flags)
 {
+    if (heapdiff::HeapDiff::InProgress()) return;
+
     HandleScope scope;
 
     Baton * baton = new Baton;
