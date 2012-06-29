@@ -3,6 +3,7 @@
  */
 
 #include "heapdiff.hh"
+#include "util.hh"
 
 #include <node.h>
 
@@ -11,10 +12,8 @@
 #include <string>
 #include <set>
 #include <vector>
-#include <sstream>
 
 #include <stdlib.h> // abs()
-#include <math.h> // round()
 
 using namespace v8;
 using namespace node;
@@ -26,8 +25,6 @@ bool heapdiff::HeapDiff::InProgress()
 {
     return s_inProgress;
 }
-
-        
 
 heapdiff::HeapDiff::HeapDiff() : ObjectWrap(), before(NULL), after(NULL)
 {
@@ -197,21 +194,6 @@ static void manageChange(changeset & changes, const HeapGraphNode * node, bool a
     return;
 }
 
-static std::string niceSize(int bytes) 
-{
-    std::stringstream ss;
-    
-    if (abs(bytes) > 1024 * 1024) {
-        ss << round(bytes / (((double) 1024 * 1024 ) / 100)) / (double) 100 << " mb";
-    } else if (abs(bytes) > 1024) {
-        ss << round(bytes / (((double) 1024 ) / 100)) / (double) 100 << " kb";
-    } else {
-        ss << bytes << " bytes";
-    }
-    
-    return ss.str();
-}
-
 static Handle<Value> changesetToObject(changeset & changes) 
 {
     v8::HandleScope scope;    
@@ -221,7 +203,7 @@ static Handle<Value> changesetToObject(changeset & changes)
         Local<Object> d = Object::New();
         d->Set(String::New("what"), String::New(i->first.c_str()));
         d->Set(String::New("size_bytes"), Integer::New(i->second.size));
-        d->Set(String::New("size"), String::New(niceSize(i->second.size).c_str()));
+        d->Set(String::New("size"), String::New(mw_util::niceSize(i->second.size).c_str()));
         d->Set(String::New("+"), Integer::New(i->second.added));
         d->Set(String::New("-"), Integer::New(i->second.released));
         a->Set(a->Length(), d);
@@ -244,7 +226,7 @@ compare(const v8::HeapSnapshot * before, const v8::HeapSnapshot * after)
     b->Set(String::New("nodes"), Integer::New(before->GetNodesCount()));
     s = before->GetRoot()->GetRetainedSize(true);
     b->Set(String::New("size_bytes"), Integer::New(s));
-    b->Set(String::New("size"), String::New(niceSize(s).c_str()));
+    b->Set(String::New("size"), String::New(mw_util::niceSize(s).c_str()));
     o->Set(String::New("before"), b);
     
     Local<Object> a = Object::New();
@@ -253,12 +235,12 @@ compare(const v8::HeapSnapshot * before, const v8::HeapSnapshot * after)
     s = after->GetRoot()->GetRetainedSize(true);
     diffBytes = s - diffBytes;
     a->Set(String::New("size_bytes"), Integer::New(s));
-    a->Set(String::New("size"), String::New(niceSize(s).c_str()));
+    a->Set(String::New("size"), String::New(mw_util::niceSize(s).c_str()));
     o->Set(String::New("after"), a);
 
     Local<Object> c = Object::New();
     c->Set(String::New("size_bytes"), Integer::New(diffBytes));
-    c->Set(String::New("size"), String::New(niceSize(diffBytes).c_str()));
+    c->Set(String::New("size"), String::New(mw_util::niceSize(diffBytes).c_str()));
 
     o->Set(String::New("change"), c);
 

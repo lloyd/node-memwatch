@@ -10,8 +10,6 @@ function msFromStart() {
   return new Date() - start;
 }
 
-var memwatch = require('../');
-
 var leak = [];
 
 // every second, this program "leaks" a little bit
@@ -46,14 +44,19 @@ function doHTTPRequest() {
 doHTTPRequest();
 doHTTPRequest();
 
+var memwatch = require('../');
+
 // report to console postgc heap size
-memwatch.on('gc', function(d) {
-  if (d.compacted) {
-    console.log("postgc:", msFromStart(), memwatch.stats().current_base);
-  }
+memwatch.on('stats', function(d) {
+  console.log("postgc:", msFromStart(), d.current_base);
+});
+
+memwatch.on('leak', function(d) {
+  console.log("LEAK:", d);
 });
 
 // also report periodic heap size (every 10s)
 setInterval(function() {
   console.log("naive:", msFromStart(), process.memoryUsage().heapUsed);
-}, 10000);
+  memwatch.gc();
+}, 5000);

@@ -26,6 +26,7 @@ def build(bld):
   gcstats.source = """
     src/memwatch.cc
     src/heapdiff.cc
+    src/util.cc
     src/init.cc
   """
 
