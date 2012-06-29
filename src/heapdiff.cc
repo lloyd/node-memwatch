@@ -14,12 +14,14 @@
 #include <vector>
 
 #include <stdlib.h> // abs()
+#include <time.h>   // time()
 
 using namespace v8;
 using namespace node;
 using namespace std;
 
 static bool s_inProgress = false;
+static time_t s_startTime;
 
 bool heapdiff::HeapDiff::InProgress() 
 {
@@ -68,6 +70,7 @@ heapdiff::HeapDiff::New (const v8::Arguments& args)
 
     // take a snapshot and save a pointer to it
     s_inProgress = true;
+    s_startTime = time(NULL);
     self->before = v8::HeapProfiler::TakeSnapshot(v8::String::New(""));
     s_inProgress = false;
 
@@ -227,6 +230,7 @@ compare(const v8::HeapSnapshot * before, const v8::HeapSnapshot * after)
     s = before->GetRoot()->GetRetainedSize(true);
     b->Set(String::New("size_bytes"), Integer::New(s));
     b->Set(String::New("size"), String::New(mw_util::niceSize(s).c_str()));
+    b->Set(String::New("time"), NODE_UNIXTIME_V8(s_startTime));
     o->Set(String::New("before"), b);
     
     Local<Object> a = Object::New();
@@ -236,6 +240,7 @@ compare(const v8::HeapSnapshot * before, const v8::HeapSnapshot * after)
     diffBytes = s - diffBytes;
     a->Set(String::New("size_bytes"), Integer::New(s));
     a->Set(String::New("size"), String::New(mw_util::niceSize(s).c_str()));
+    a->Set(String::New("time"), NODE_UNIXTIME_V8(time(NULL)));
     o->Set(String::New("after"), a);
 
     Local<Object> c = Object::New();
