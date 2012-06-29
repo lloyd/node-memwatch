@@ -6,12 +6,12 @@
   "engines": { "node": ">= 0.6.0" },
   "repository": {
         "type": "git",
-        "url": "https://github.com/lloyd/memwatch.git"
+        "url": "https://github.com/lloyd/node-memwatch.git"
    },
   "main": "include.js",
    "licenses": [ { "type": "wtfpl" } ],
    "bugs": {
-     "url" : "https://github.com/lloyd/memwatch/issues"
+     "url" : "https://github.com/lloyd/node-memwatch/issues"
    },
    "scripts": {
      "install": "make build"
