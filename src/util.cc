@@ -6,6 +6,7 @@
 
 #include <sstream>
 
+#include <stdlib.h> // abs()
 #include <math.h> // round()
 
 std::string
