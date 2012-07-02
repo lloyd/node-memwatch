@@ -165,41 +165,41 @@ static void AsyncMemwatchAfter(uv_work_t* request) {
                 s_stats.base_max = s_stats.last_base;
             }
         }
-        
-        // if there are any listeners, it's time to emit!
-        if (!g_cb.IsEmpty()) {        
-            Handle<Value> argv[3];
-            // magic argument to indicate to the callback all we want to know is whether there are
-            // listeners (here we don't)
-            argv[0] = Boolean::New(true);
+    }
+    // if there are any listeners, it's time to emit!
+    if (!g_cb.IsEmpty()) {        
+        Handle<Value> argv[3];
+        // magic argument to indicate to the callback all we want to know is whether there are
+        // listeners (here we don't)
+        argv[0] = Boolean::New(true);
 
-            Handle<Value> haveListeners = g_cb->Call(g_context, 1, argv);
+        Handle<Value> haveListeners = g_cb->Call(g_context, 1, argv);
 
-            if (haveListeners->BooleanValue()) {
-                double ut= 0.0;
-                if (s_stats.base_ancient) {
-                    ut = (double) round(((double) (s_stats.base_recent - s_stats.base_ancient) /
-                                         (double) s_stats.base_ancient) * 1000.0) / 10.0;
-                }
-
-                // ok, there are listeners, we actually must serialize and emit this stats event
-                Local<Object> stats = Object::New();
-                stats->Set(String::New("num_full_gc"), Integer::New(s_stats.gc_full));
-                stats->Set(String::New("num_inc_gc"), Integer::New(s_stats.gc_inc));
-                stats->Set(String::New("heap_compactions"), Integer::New(s_stats.gc_compact));
-                stats->Set(String::New("usage_trend"), Number::New(ut));
-                stats->Set(String::New("estimated_base"), Integer::New(s_stats.base_recent));
-                stats->Set(String::New("current_base"), Integer::New(s_stats.last_base));
-                stats->Set(String::New("min"), Integer::New(s_stats.base_min));
-                stats->Set(String::New("max"), Integer::New(s_stats.base_max));
-                argv[0] = Boolean::New(false);
-                // the type of event to emit
-                argv[1] = String::New("stats");
-                argv[2] = stats;
-                g_cb->Call(g_context, 3, argv);
+        if (haveListeners->BooleanValue()) {
+            double ut= 0.0;
+            if (s_stats.base_ancient) {
+                ut = (double) round(((double) (s_stats.base_recent - s_stats.base_ancient) /
+                                     (double) s_stats.base_ancient) * 1000.0) / 10.0;
             }
+            // ok, there are listeners, we actually must serialize and emit this stats event
+            Local<Object> stats = Object::New();
+            stats->Set(String::New("type"), String::New((b->type == kGCTypeMarkSweepCompact) ? "full" : "inc"));
+            stats->Set(String::New("num_full_gc"), Integer::New(s_stats.gc_full));
+            stats->Set(String::New("num_inc_gc"), Integer::New(s_stats.gc_inc));
+            stats->Set(String::New("heap_compactions"), Integer::New(s_stats.gc_compact));
+            stats->Set(String::New("usage_trend"), Number::New(ut));
+            stats->Set(String::New("estimated_base"), Integer::New(s_stats.base_recent));
+            stats->Set(String::New("current_base"), Integer::New(s_stats.last_base));
+            stats->Set(String::New("min"), Integer::New(s_stats.base_min));
+            stats->Set(String::New("max"), Integer::New(s_stats.base_max));
+            argv[0] = Boolean::New(false);
+            // the type of event to emit
+            argv[1] = String::New("stats");
+            argv[2] = stats;
+            g_cb->Call(g_context, 3, argv);
         }
     }
+
 
     delete b;
 }
