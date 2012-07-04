@@ -7,16 +7,18 @@ Node.JS code.
 - A `leak` event is emitted, with an explanation, when it appears your
   code is leaking memory.
 
-- A `stats` event is emitted when V8 performs a garbage collection,
-  with data describing your heap usage and trends over time.
+- A `stats` event is emitted occasionally, giving you
+  data describing your heap usage and trends over time.
 
-- A `HeapDiff` class lets you track all heap allocations over time.
+- A `HeapDiff` class lets you compare the state of your heap between
+  two points in time, telling you what's been allocated, and what's
+  been released.
 
 
 Installation
 ------------
 
-- `npm install heapdiff`
+- `npm install memwatch`
 
 or
 
@@ -26,17 +28,16 @@ or
 Description
 -----------
 
-There is a growing number of tools for debugging and profiling memory
+There are a growing number of tools for debugging and profiling memory
 usage in Node.JS applications, but there is still a need for a
 platform-independent native module that requires no special
-instrumentation.  This module attempts to supply that need.
+instrumentation.  This module attempts to satisfy that need.
 
-Let's assume you import `node-memwatch` like so:
+To get started, import `node-memwatch` like so:
 
 ```javascript
 var memwatch = require('memwatch');
 ```
-
 
 ### Leak Detection
 
@@ -60,12 +61,12 @@ The `info` object will look something like:
 
 ### Heap Usage
 
-The best way to evaluate your memory footprint is to do so right after
-V8 performs garbage collection.  `memwatch` can take a memory snapshot
-after GC has occurred, and before Node has a chance to allocate any
-new objects, giving you a clear view of your actual memory usage.
+The best way to evaluate your memory footprint is to look at heap
+usage right aver V8 performs garbage collection.  `memwatch` does
+exactly this - it checks heap usage only after GC to give you a stable
+baseline of your actual memory usage.
 
-When V8 performs a garbage collection (for the picky, we're talking
+When V8 performs a garbage collection (technically, we're talking
 about a full GC with heap compaction), `memwatch` will emit a `stats`
 event.
 
@@ -101,7 +102,7 @@ do a full GC and heap compaction.
 ### Heap Diffing
 
 So far we have seen how `memwatch` can aid in leak detection.  For
-leak location, it provides a `HeapDiff` class that takes two snapshots
+leak isolation, it provides a `HeapDiff` class that takes two snapshots
 and computes a diff between them.  For example:
 
 ```javascript
@@ -136,9 +137,9 @@ The contents of `diff` will look something like:
   }
 ```
 
-The diff shows that during the sample period, `String` and `Array`
-allocations decreased, but `Leaking Class` grew by 9998 allocations.
-Hmm.
+The diff shows that during the sample period, the total number of
+allocated `String` and `Array` classes decreased, but `Leaking Class`
+grew by 9998 allocations.  Hmmm.
 
 You can use `HeapDiff` in your `on('stats')` callback; even though it
 takes a memory snapshot, which triggers a V8 GC, it will not trigger
@@ -149,4 +150,3 @@ Future Work
 -----------
 
 Please see the Issues to share suggestions and contribute!
-
