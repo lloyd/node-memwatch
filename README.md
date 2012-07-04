@@ -4,12 +4,12 @@
 `node-memwatch` is here to help you detect and find memory leaks in
 Node.JS code.  It provides:
 
-- A `leak` event is emitted when it appears your code is leaking memory.
+- A `leak` event, emitted when it appears your code is leaking memory.
 
-- A `stats` event is emitted occasionally, giving you
+- A `stats` event, emitted occasionally, giving you
   data describing your heap usage and trends over time.
 
-- A `HeapDiff` class lets you compare the state of your heap between
+- A `HeapDiff` class that lets you compare the state of your heap between
   two points in time, telling you what has been allocated, and what
   has been released.
 
