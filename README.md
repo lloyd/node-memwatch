@@ -149,3 +149,9 @@ Future Work
 -----------
 
 Please see the Issues to share suggestions and contribute!
+
+
+License
+-------
+
+http://wtfpl.org
