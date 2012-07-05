@@ -38,7 +38,7 @@ heapdiff::HeapDiff::~HeapDiff()
         ((HeapSnapshot *) before)->Delete();
         before = NULL;
     }
-    
+
     if (after) {
         ((HeapSnapshot *) after)->Delete();
         after = NULL;
@@ -49,7 +49,7 @@ void
 heapdiff::HeapDiff::Initialize ( v8::Handle<v8::Object> target )
 {
     v8::HandleScope scope;
-    
+
     v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(New);
     t->InstanceTemplate()->SetInternalFieldCount(1);
     t->SetClassName(String::NewSymbol("HeapDiff"));
@@ -77,7 +77,7 @@ heapdiff::HeapDiff::New (const v8::Arguments& args)
     return args.This();
 }
 
-static string handleToStr(const Handle<Value> & str) 
+static string handleToStr(const Handle<Value> & str)
 {
     Local<String> s = str->ToString();
     char buf[s->Utf8Length() + 1];
@@ -86,7 +86,7 @@ static string handleToStr(const Handle<Value> & str)
 }
 
 static void
-buildIDSet(set<uint64_t> * seen, const HeapGraphNode* cur) 
+buildIDSet(set<uint64_t> * seen, const HeapGraphNode* cur)
 {
     v8::HandleScope scope;
 
@@ -102,7 +102,7 @@ buildIDSet(set<uint64_t> * seen, const HeapGraphNode* cur)
     }
 
     seen->insert(cur->GetId());
-    
+
     for (int i=0; i < cur->GetChildrenCount(); i++) {
         buildIDSet(seen, cur->GetChild(i)->GetToNode());
     }
@@ -112,7 +112,7 @@ typedef set<uint64_t> idset;
 
 // why doesn't STL work?
 // XXX: improve this algorithm
-void setDiff(idset a, idset b, vector<uint64_t> &c) 
+void setDiff(idset a, idset b, vector<uint64_t> &c)
 {
     for (idset::iterator i = a.begin(); i != a.end(); i++) {
         if (b.find(*i) == b.end()) c.push_back(*i);
@@ -120,7 +120,7 @@ void setDiff(idset a, idset b, vector<uint64_t> &c)
 }
 
 
-class example 
+class example
 {
 public:
     HeapGraphEdge::Type context;
@@ -137,7 +137,7 @@ public:
                 self_size(0), retained_size(0), retainers(0) { };
 };
 
-class change 
+class change
 {
 public:
     long int size;
@@ -150,10 +150,10 @@ public:
 
 typedef std::map<std::string, change>changeset;
 
-static void manageChange(changeset & changes, const HeapGraphNode * node, bool added) 
+static void manageChange(changeset & changes, const HeapGraphNode * node, bool added)
 {
     std::string type;
-    
+
     switch(node->GetType()) {
         case HeapGraphNode::kHidden: return;
         case HeapGraphNode::kArray:
@@ -193,13 +193,13 @@ static void manageChange(changeset & changes, const HeapGraphNode * node, bool a
     else i->second.released++;
 
     // XXX: example
-    
+
     return;
 }
 
-static Handle<Value> changesetToObject(changeset & changes) 
+static Handle<Value> changesetToObject(changeset & changes)
 {
-    v8::HandleScope scope;    
+    v8::HandleScope scope;
     Local<Array> a = Array::New();
 
     for (changeset::iterator i = changes.begin(); i != changes.end(); i++) {
@@ -232,7 +232,7 @@ compare(const v8::HeapSnapshot * before, const v8::HeapSnapshot * after)
     b->Set(String::New("size"), String::New(mw_util::niceSize(s).c_str()));
     b->Set(String::New("time"), NODE_UNIXTIME_V8(s_startTime));
     o->Set(String::New("before"), b);
-    
+
     Local<Object> a = Object::New();
     a->Set(String::New("nodes"), Integer::New(after->GetNodesCount()));
     diffBytes = s;
@@ -254,7 +254,7 @@ compare(const v8::HeapSnapshot * before, const v8::HeapSnapshot * after)
     buildIDSet(&beforeIDs, before->GetRoot());
 
     buildIDSet(&afterIDs, after->GetRoot());
-    
+
     // before - after will reveal nodes released (memory freed)
     vector<uint64_t> changedIDs;
     setDiff(beforeIDs, afterIDs, changedIDs);
@@ -273,16 +273,16 @@ compare(const v8::HeapSnapshot * before, const v8::HeapSnapshot * after)
 
     // after - before will reveal nodes added (memory allocated)
     setDiff(afterIDs, beforeIDs, changedIDs);
-    
+
     c->Set(String::New("allocated_nodes"), Integer::New(changedIDs.size()));
 
     for (int i = 0; i < changedIDs.size(); i++) {
         const HeapGraphNode * n = after->GetNodeById(changedIDs[i]);
         manageChange(changes, n, true);
     }
-    
+
     c->Set(String::New("details"), changesetToObject(changes));
-    
+
     return scope.Close(o);
 }
 
@@ -297,8 +297,6 @@ heapdiff::HeapDiff::End( const Arguments& args )
     v8::HandleScope scope;
 
     HeapDiff *t = Unwrap<HeapDiff>( args.This() );
-    
+
     return scope.Close(compare(t->before, after));
 }
-
-
