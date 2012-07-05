@@ -1,10 +1,11 @@
 # -*- mode: python -*-
 
-import Options, Utils, sys
+import Options, Utils, sys, os
 
 srcdir = "."
 blddir = "build"
 VERSION = "0.0.1"
+node_version = os.popen("node --version").read()
 
 def set_options(opt):
   opt.tool_options("compiler_cxx")
@@ -22,6 +23,11 @@ def configure(conf):
 def build(bld):
   gcstats = bld.new_task_gen("cxx", "shlib", "node_addon")
   gcstats.cxxflags =  [ "-O3" ]
+  if node_version.startswith("v0.8"):
+    # the v8 in node 0.8.x doesn't ever send a kGCCallbackFlagCompacted -
+    # instead we key of GC type.  I don't fully understand this behavioral
+    # change, but the numbers we get are still stable / similar to 0.6.
+    gcstats.cxxflags.append("-DNEW_COMPACTION_BEHAVIOR=1")
   gcstats.target = "memwatch"
   gcstats.source = """
     src/memwatch.cc

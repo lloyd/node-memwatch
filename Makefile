@@ -11,7 +11,6 @@ compile:
 	node-waf build
 
 clean:
-	#rm -f bcrypt_lib.node
 	rm -Rf build
 
 

@@ -58,5 +58,4 @@ memwatch.on('leak', function(d) {
 // also report periodic heap size (every 10s)
 setInterval(function() {
   console.log("naive:", msFromStart(), process.memoryUsage().heapUsed);
-  memwatch.gc();
 }, 5000);

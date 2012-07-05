@@ -86,7 +86,7 @@ static string handleToStr(const Handle<Value> & str)
 }
 
 static void
-buildIDSet(set<uint64_t> * seen, const HeapGraphNode* cur)
+buildIDSet(set<uint64_t> * seen, const HeapGraphNode* cur, int & s)
 {
     v8::HandleScope scope;
 
@@ -101,10 +101,13 @@ buildIDSet(set<uint64_t> * seen, const HeapGraphNode* cur)
         return;
     }
 
+    // update memory usage as we go
+    s += cur->GetSelfSize();
+
     seen->insert(cur->GetId());
 
     for (int i=0; i < cur->GetChildrenCount(); i++) {
-        buildIDSet(seen, cur->GetChild(i)->GetToNode());
+        buildIDSet(seen, cur->GetChild(i)->GetToNode(), s);
     }
 }
 
@@ -227,33 +230,33 @@ compare(const v8::HeapSnapshot * before, const v8::HeapSnapshot * after)
     // first let's append summary information
     Local<Object> b = Object::New();
     b->Set(String::New("nodes"), Integer::New(before->GetNodesCount()));
-    s = before->GetRoot()->GetRetainedSize(true);
-    b->Set(String::New("size_bytes"), Integer::New(s));
-    b->Set(String::New("size"), String::New(mw_util::niceSize(s).c_str()));
     b->Set(String::New("time"), NODE_UNIXTIME_V8(s_startTime));
     o->Set(String::New("before"), b);
 
     Local<Object> a = Object::New();
     a->Set(String::New("nodes"), Integer::New(after->GetNodesCount()));
-    diffBytes = s;
-    s = after->GetRoot()->GetRetainedSize(true);
-    diffBytes = s - diffBytes;
-    a->Set(String::New("size_bytes"), Integer::New(s));
-    a->Set(String::New("size"), String::New(mw_util::niceSize(s).c_str()));
     a->Set(String::New("time"), NODE_UNIXTIME_V8(time(NULL)));
     o->Set(String::New("after"), a);
+
+    // now let's get allocations by name
+    set<uint64_t> beforeIDs, afterIDs;
+    s = 0;
+    buildIDSet(&beforeIDs, before->GetRoot(), s);
+    b->Set(String::New("size_bytes"), Integer::New(s));
+    b->Set(String::New("size"), String::New(mw_util::niceSize(s).c_str()));
+
+    diffBytes = s;
+    s = 0;
+    buildIDSet(&afterIDs, after->GetRoot(), s);
+    a->Set(String::New("size_bytes"), Integer::New(s));
+    a->Set(String::New("size"), String::New(mw_util::niceSize(s).c_str()));
+
+    diffBytes = s - diffBytes;
 
     Local<Object> c = Object::New();
     c->Set(String::New("size_bytes"), Integer::New(diffBytes));
     c->Set(String::New("size"), String::New(mw_util::niceSize(diffBytes).c_str()));
-
     o->Set(String::New("change"), c);
-
-    // now let's get allocations by name
-    set<uint64_t> beforeIDs, afterIDs;
-    buildIDSet(&beforeIDs, before->GetRoot());
-
-    buildIDSet(&afterIDs, after->GetRoot());
 
     // before - after will reveal nodes released (memory freed)
     vector<uint64_t> changedIDs;

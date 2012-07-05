@@ -11,7 +11,6 @@
 
 #include <string>
 #include <cstring>
-#include <iostream>
 #include <sstream>
 
 #include <math.h> // for pow
@@ -34,7 +33,7 @@ struct Baton {
 static const unsigned int RECENT_PERIOD = 10;
 static const unsigned int ANCIENT_PERIOD = 120;
 
-static struct 
+static struct
 {
     // counts of different types of gc events
     unsigned int gc_full;
@@ -43,7 +42,7 @@ static struct
 
     // last base heap size as measured *right* after GC
     unsigned int last_base;
-    
+
     // the estimated "base memory" usage of the javascript heap
     // over the RECENT_PERIOD number of GC runs
     unsigned int base_recent;
@@ -65,16 +64,15 @@ static struct
     // the number of consecutive compactions for which we've grown
     unsigned int consecutive_growth;
 } s_stats;
-    
 
-static Handle<Value> getLeakReport(size_t heapUsage) 
+static Handle<Value> getLeakReport(size_t heapUsage)
 {
     HandleScope scope;
 
     size_t growth = heapUsage - s_stats.leak_base_start;
     int now = time(NULL);
     int delta = now - s_stats.leak_time_start;
-    
+
     Local<Object> leakReport = Object::New();
     leakReport->Set(String::New("start"), NODE_UNIXTIME_V8(s_stats.leak_time_start));
     leakReport->Set(String::New("end"), NODE_UNIXTIME_V8(now));
@@ -100,16 +98,22 @@ static void AsyncMemwatchAfter(uv_work_t* request) {
     if (b->type == kGCTypeMarkSweepCompact) s_stats.gc_full++;
     else s_stats.gc_inc++;
 
-    if (b->flags == kGCCallbackFlagCompacted) {
+    if (
+#if defined(NEW_COMPACTION_BEHAVIOR)
+        b->type == kGCTypeMarkSweepCompact
+#else
+        b->flags == kGCCallbackFlagCompacted
+#endif
+        ) {
         // leak detection code.  has the heap usage grown?
         if (s_stats.last_base < b->heapUsage) {
             if (s_stats.consecutive_growth == 0) {
                 s_stats.leak_time_start = time(NULL);
                 s_stats.leak_base_start = b->heapUsage;
             }
-            
+
             s_stats.consecutive_growth++;
-            
+
             // consecutive growth over 5 GCs suggests a leak
             if (s_stats.consecutive_growth >= 5) {
                 // reset to zero
@@ -132,7 +136,7 @@ static void AsyncMemwatchAfter(uv_work_t* request) {
 
         // update compaction count
         s_stats.gc_compact++;
-        
+
         // the first ten compactions we'll use a different algorithm to
         // dampen out wider memory fluctuation at startup
         if (s_stats.gc_compact < RECENT_PERIOD) {
@@ -165,9 +169,9 @@ static void AsyncMemwatchAfter(uv_work_t* request) {
                 s_stats.base_max = s_stats.last_base;
             }
         }
-        
+
         // if there are any listeners, it's time to emit!
-        if (!g_cb.IsEmpty()) {        
+        if (!g_cb.IsEmpty()) {
             Handle<Value> argv[3];
             // magic argument to indicate to the callback all we want to know is whether there are
             // listeners (here we don't)
@@ -219,7 +223,7 @@ void memwatch::after_gc(GCType type, GCCallbackFlags flags)
     baton->type = type;
     baton->flags = flags;
     baton->req.data = (void *) baton;
-    
+
     uv_queue_work(uv_default_loop(), &(baton->req), NULL, AsyncMemwatchAfter);
 
     scope.Close(Undefined());
