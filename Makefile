@@ -1,17 +1,17 @@
 TESTS = test/*.js
 
-all: build
+all: build test
 
 build: clean configure compile
 
 configure:
-	node-waf configure
+	node-gyp configure
 
-compile:
-	node-waf build
+compile: configure
+	node-gyp build
 
 clean:
-	rm -Rf build
+	node-gyp clean
 
 
 .PHONY: clean test build

@@ -19,9 +19,11 @@
    },
    "devDependencies": {
      "mocha": "1.2.2",
-     "should": "0.6.3"
+     "should": "0.6.3",
+     "node-gyp": "0.5.7"
    },
    "contributors": [
-     "Jed Parsons (@jedp)"
+     "Jed Parsons (@jedp)",
+     "Jeff Haynie (@jhaynie)"
    ]
 }
