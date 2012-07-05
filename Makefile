@@ -1,6 +1,6 @@
 TESTS = test/*.js
 
-all: test
+all: build test
 
 build: clean configure compile
 
