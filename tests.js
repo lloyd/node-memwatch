@@ -1,0 +1,45 @@
+const
+should = require('should'),
+memwatch = require('./');
+
+describe('the library', function() {
+  it('should export a couple functions', function(done) {
+    should.exist(memwatch.gc);
+    should.exist(memwatch.on);
+    should.exist(memwatch.once);
+    should.exist(memwatch.removeAllListeners);
+    should.exist(memwatch.HeapDiff);
+    done();
+  });
+});
+
+describe('calling .gc()', function() {
+  it('should cause a stats() event to be emitted', function(done) {
+    memwatch.once('stats', function(s) {
+      s.should.be.a('object');
+      done();
+    });
+    memwatch.gc();
+  });
+});
+
+describe('HeapDiff', function() {
+  it('should detect allocations', function(done) {
+    function LeakingClass() {};
+    var arr = [];
+    var hd = new memwatch.HeapDiff();
+    for (var i = 0; i < 100; i++) arr.push(new LeakingClass());
+    var diff = hd.end();
+    (Array.isArray(diff.change.details)).should.be.ok;
+    diff.change.details.should.be.an.instanceOf(Array);
+    // find the LeakingClass elem
+    var leakingReport;
+    diff.change.details.forEach(function(d) {
+      if (d.what === 'LeakingClass')
+        leakingReport = d;
+    });
+    should.exist(leakingReport);
+    ((leakingReport['+'] - leakingReport['-']) > 0).should.be.ok;
+    done();
+  });
+});

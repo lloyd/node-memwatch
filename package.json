@@ -14,7 +14,12 @@
      "url" : "https://github.com/lloyd/node-memwatch/issues"
    },
    "scripts": {
-     "install": "make build"
+     "install": "make build",
+     "test": "mocha tests"
+   },
+   "devDependencies": {
+     "mocha": "1.2.2",
+     "should": "0.6.3"
    },
    "contributors": [
      "Jed Parsons (@jedp)"
