@@ -1,0 +1,4 @@
+v0.1.2 -
+
+	* Addition of unit tests (running on travis)
+	* fix bug whereby events would not be emitted when listeners use .once()
