@@ -1,6 +1,8 @@
 `node-memwatch`: Leak Detection and Heap Diffing for Node.JS
 ============================================================
 
+[![Build Status](https://secure.travis-ci.org/lloyd/node-memwatch.png)](http://travis-ci.org/lloyd/node-memwatch)
+
 `node-memwatch` is here to help you detect and find memory leaks in
 Node.JS code.  It provides:
 
