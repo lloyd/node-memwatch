@@ -14,8 +14,7 @@
      "url" : "https://github.com/lloyd/node-memwatch/issues"
    },
    "scripts": {
-     "preinstall": "node-gyp configure",
-     "install": "node-gyp build",
+     "install": "node-gyp configure && node-gyp build",
      "test": "mocha tests"
    },
    "devDependencies": {
