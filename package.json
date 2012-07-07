@@ -1,7 +1,7 @@
 {
   "name": "memwatch",
   "description": "Keep an eye on your memory usage, and discover and isolate leaks.",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "author": "Lloyd Hilaiel (http://lloyd.io)",
   "engines": { "node": ">= 0.6.0" },
   "repository": {
