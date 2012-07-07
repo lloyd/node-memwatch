@@ -5,7 +5,7 @@
       'include_dirs': [
       ],
       'variables': {
-        'node_ver': '<!(node --version | sed -e "s/^v\([0-9]+\\.[0-9]+\).*$/\\1/")'
+        'node_ver': '<!(node --version | sed -e "s/^v\([0-9]*\\.[0-9]*\).*$/\\1/")'
       },
       'sources': [
         'src/heapdiff.cc',
