@@ -158,7 +158,6 @@ static void manageChange(changeset & changes, const HeapGraphNode * node, bool a
     std::string type;
 
     switch(node->GetType()) {
-        case HeapGraphNode::kHidden: return;
         case HeapGraphNode::kArray:
             type.append("Array");
             break;
@@ -183,6 +182,9 @@ static void manageChange(changeset & changes, const HeapGraphNode * node, bool a
         case HeapGraphNode::kNative:
             type.append("Native");
             break;
+        case HeapGraphNode::kHidden:
+        default:
+            return;
     }
 
     if (changes.find(type) == changes.end()) {
@@ -267,7 +269,7 @@ compare(const v8::HeapSnapshot * before, const v8::HeapSnapshot * after)
     changeset changes;
 
     // for each of these nodes, let's aggregate the change information
-    for (int i = 0; i < changedIDs.size(); i++) {
+    for (unsigned long i = 0; i < changedIDs.size(); i++) {
         const HeapGraphNode * n = before->GetNodeById(changedIDs[i]);
         manageChange(changes, n, false);
     }
@@ -279,7 +281,7 @@ compare(const v8::HeapSnapshot * before, const v8::HeapSnapshot * after)
 
     c->Set(String::New("allocated_nodes"), Integer::New(changedIDs.size()));
 
-    for (int i = 0; i < changedIDs.size(); i++) {
+    for (unsigned long i = 0; i < changedIDs.size(); i++) {
         const HeapGraphNode * n = after->GetNodeById(changedIDs[i]);
         manageChange(changes, n, true);
     }

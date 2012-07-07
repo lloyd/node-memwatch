@@ -1,6 +1,4 @@
-TESTS = test/*.js
-
-all: build test
+all: build
 
 build: clean configure compile
 
@@ -12,6 +10,5 @@ compile: configure
 
 clean:
 	node-gyp clean
-
 
 .PHONY: clean test build
