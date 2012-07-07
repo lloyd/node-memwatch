@@ -5,25 +5,25 @@
   "author": "Lloyd Hilaiel (http://lloyd.io)",
   "engines": { "node": ">= 0.6.0" },
   "repository": {
-        "type": "git",
-        "url": "https://github.com/lloyd/node-memwatch.git"
-   },
+    "type": "git",
+    "url": "https://github.com/lloyd/node-memwatch.git"
+  },
   "main": "include.js",
-   "licenses": [ { "type": "wtfpl" } ],
-   "bugs": {
-     "url" : "https://github.com/lloyd/node-memwatch/issues"
-   },
-   "scripts": {
-     "install": "node-gyp rebuild",
-     "test": "mocha tests"
-   },
-   "devDependencies": {
-     "mocha": "1.2.2",
-     "should": "0.6.3",
-     "node-gyp": "0.5.7"
-   },
-   "contributors": [
-     "Jed Parsons (@jedp)",
-     "Jeff Haynie (@jhaynie)"
-   ]
+  "licenses": [ { "type": "wtfpl" } ],
+  "bugs": {
+    "url" : "https://github.com/lloyd/node-memwatch/issues"
+  },
+  "scripts": {
+    "install": "node-gyp rebuild",
+    "test": "mocha tests"
+  },
+  "devDependencies": {
+    "mocha": "1.2.2",
+    "should": "0.6.3",
+    "node-gyp": "0.5.7"
+  },
+  "contributors": [
+    "Jed Parsons (@jedp)",
+    "Jeff Haynie (@jhaynie)"
+  ]
 }
