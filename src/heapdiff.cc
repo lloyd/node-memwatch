@@ -79,10 +79,8 @@ heapdiff::HeapDiff::New (const v8::Arguments& args)
 
 static string handleToStr(const Handle<Value> & str)
 {
-    Local<String> s = str->ToString();
-    char buf[s->Utf8Length() + 1];
-    s->WriteUtf8(buf);
-    return std::string(buf);
+	String::Utf8Value utfString(str->ToString());
+	return *utfString;   
 }
 
 static void

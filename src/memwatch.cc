@@ -2,6 +2,7 @@
  * 2012|lloyd|http://wtfpl.org
  */
 
+#include "platformcompat.hh"
 #include "memwatch.hh"
 #include "heapdiff.hh"
 #include "util.hh"
@@ -15,7 +16,6 @@
 
 #include <math.h> // for pow
 #include <time.h> // for time
-
 
 using namespace v8;
 using namespace node;
@@ -142,7 +142,7 @@ static void AsyncMemwatchAfter(uv_work_t* request) {
         if (s_stats.gc_compact < RECENT_PERIOD) {
             double decay = pow(s_stats.gc_compact / RECENT_PERIOD, 2.5);
             decay *= s_stats.gc_compact;
-            if (isinf(decay) || isnan(decay)) decay = 0;
+            if (ISINF(decay) || ISNAN(decay)) decay = 0;
             s_stats.base_recent = ((s_stats.base_recent * decay) +
                                    s_stats.last_base) / (decay + 1);
 
@@ -154,7 +154,7 @@ static void AsyncMemwatchAfter(uv_work_t* request) {
         } else {
             s_stats.base_recent = ((s_stats.base_recent * (RECENT_PERIOD - 1)) +
                                    s_stats.last_base) / RECENT_PERIOD;
-            double decay = fmin(ANCIENT_PERIOD, s_stats.gc_compact);
+            double decay = FMIN(ANCIENT_PERIOD, s_stats.gc_compact);
             s_stats.base_ancient = ((s_stats.base_ancient * (decay - 1)) +
                                     s_stats.last_base) / decay;
         }
@@ -182,7 +182,7 @@ static void AsyncMemwatchAfter(uv_work_t* request) {
             if (haveListeners->BooleanValue()) {
                 double ut= 0.0;
                 if (s_stats.base_ancient) {
-                    ut = (double) round(((double) (s_stats.base_recent - s_stats.base_ancient) /
+                    ut = (double) ROUND(((double) (s_stats.base_recent - s_stats.base_ancient) /
                                          (double) s_stats.base_ancient) * 1000.0) / 10.0;
                 }
 

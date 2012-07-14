@@ -2,12 +2,12 @@
  * 2012|lloyd|http://wtfpl.org
  */
 
+#include "platformcompat.hh"
 #include "util.hh"
 
 #include <sstream>
 
 #include <stdlib.h> // abs()
-#include <math.h> // round()
 
 std::string
 mw_util::niceSize(int bytes) 
@@ -15,9 +15,9 @@ mw_util::niceSize(int bytes)
     std::stringstream ss;
     
     if (abs(bytes) > 1024 * 1024) {
-        ss << round(bytes / (((double) 1024 * 1024 ) / 100)) / (double) 100 << " mb";
+        ss << ROUND(bytes / (((double) 1024 * 1024 ) / 100)) / (double) 100 << " mb";
     } else if (abs(bytes) > 1024) {
-        ss << round(bytes / (((double) 1024 ) / 100)) / (double) 100 << " kb";
+        ss << ROUND(bytes / (((double) 1024 ) / 100)) / (double) 100 << " kb";
     } else {
         ss << bytes << " bytes";
     }
