@@ -1,3 +1,6 @@
+v0.1.5 -
+	* compiles on windows (thanks @jmatthewsr-ms! sorry to make you wait)
+
 v0.1.4 -
 	* migrate to node-gyp (thanks @jhaynie for getting it started)
 
