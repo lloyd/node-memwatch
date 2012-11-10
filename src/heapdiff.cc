@@ -312,5 +312,13 @@ heapdiff::HeapDiff::End( const Arguments& args )
     t->after = v8::HeapProfiler::TakeSnapshot(v8::String::New(""));
     s_inProgress = false;
 
-    return scope.Close(compare(t->before, t->after));
+    v8::Handle<Value> comparison = compare(t->before, t->after);
+    // free early, free often.  I mean, after all, this process we're in is
+    // probably having memory problems.  We want to help her.
+    ((HeapSnapshot *) t->before)->Delete();
+    t->before = NULL;
+    ((HeapSnapshot *) t->after)->Delete();
+    t->after = NULL;
+
+    return scope.Close(comparison);
 }
