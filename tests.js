@@ -12,7 +12,6 @@ describe('the library', function() {
     done();
   });
 });
-
 describe('calling .gc()', function() {
   it('should cause a stats() event to be emitted', function(done) {
     memwatch.once('stats', function(s) {
@@ -40,6 +39,17 @@ describe('HeapDiff', function() {
     });
     should.exist(leakingReport);
     ((leakingReport['+'] - leakingReport['-']) > 0).should.be.ok;
+    done();
+
+  });
+});
+
+describe('HeapDiff', function() {
+  it('double end should throw', function(done) {
+    var hd = new memwatch.HeapDiff();
+    var arr = [];
+    (function() { hd.end(); }).should.not.throw();
+    (function() { hd.end(); }).should.throw();
     done();
   });
 });

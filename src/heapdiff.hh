@@ -26,6 +26,7 @@ namespace heapdiff
       private:
         const v8::HeapSnapshot * before;
         const v8::HeapSnapshot * after;
+        bool ended;
     };
 };
 
