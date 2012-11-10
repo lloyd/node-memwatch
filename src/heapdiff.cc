@@ -28,7 +28,8 @@ bool heapdiff::HeapDiff::InProgress()
     return s_inProgress;
 }
 
-heapdiff::HeapDiff::HeapDiff() : ObjectWrap(), before(NULL), after(NULL)
+heapdiff::HeapDiff::HeapDiff() : ObjectWrap(), before(NULL), after(NULL),
+                                 ended(false)
 {
 }
 
@@ -296,6 +297,17 @@ heapdiff::HeapDiff::End( const Arguments& args )
     v8::HandleScope scope;
 
     HeapDiff *t = Unwrap<HeapDiff>( args.This() );
+
+    // How shall we deal with double .end()ing?  The only reasonable
+    // approach seems to be an exception, cause nothing else makes
+    // sense.
+    if (t->ended) {
+        return v8::ThrowException(
+            v8::Exception::Error(
+                v8::String::New("attempt to end() a HeapDiff that was "
+                                "already ended")));
+    }
+    t->ended = true;
 
     s_inProgress = true;
     t->after = v8::HeapProfiler::TakeSnapshot(v8::String::New(""));
