@@ -293,13 +293,13 @@ v8::Handle<Value>
 heapdiff::HeapDiff::End( const Arguments& args )
 {
     // take another snapshot and compare them
-    s_inProgress = true;
-    const v8::HeapSnapshot * after = v8::HeapProfiler::TakeSnapshot(v8::String::New(""));
-    s_inProgress = false;
-
     v8::HandleScope scope;
 
     HeapDiff *t = Unwrap<HeapDiff>( args.This() );
 
-    return scope.Close(compare(t->before, after));
+    s_inProgress = true;
+    t->after = v8::HeapProfiler::TakeSnapshot(v8::String::New(""));
+    s_inProgress = false;
+
+    return scope.Close(compare(t->before, t->after));
 }
