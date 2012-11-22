@@ -208,6 +208,8 @@ static void AsyncMemwatchAfter(uv_work_t* request) {
     delete b;
 }
 
+static void noop_work_func(uv_work_t *) { }
+
 void memwatch::after_gc(GCType type, GCCallbackFlags flags)
 {
     if (heapdiff::HeapDiff::InProgress()) return;
@@ -224,7 +226,13 @@ void memwatch::after_gc(GCType type, GCCallbackFlags flags)
     baton->flags = flags;
     baton->req.data = (void *) baton;
 
-    uv_queue_work(uv_default_loop(), &(baton->req), NULL, AsyncMemwatchAfter);
+    // schedule our work to run in a moment, once gc has fully completed.
+    // 
+    // here we pass a noop work function to work around a flaw in libuv, 
+    // uv_queue_work on unix works fine, but will will crash on
+    // windows.  see: https://github.com/joyent/libuv/pull/629  
+    uv_queue_work(uv_default_loop(), &(baton->req),
+		  noop_work_func, AsyncMemwatchAfter);
 
     scope.Close(Undefined());
 }
