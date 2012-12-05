@@ -99,7 +99,7 @@ static void AsyncMemwatchAfter(uv_work_t* request) {
     else s_stats.gc_inc++;
 
     if (
-#if defined(NEW_COMPACTION_BEHAVIOR)
+#if NODE_VERSION_AT_LEAST(0,8,0)
         b->type == kGCTypeMarkSweepCompact
 #else
         b->flags == kGCCallbackFlagCompacted
