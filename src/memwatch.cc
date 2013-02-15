@@ -232,7 +232,7 @@ void memwatch::after_gc(GCType type, GCCallbackFlags flags)
     // uv_queue_work on unix works fine, but will will crash on
     // windows.  see: https://github.com/joyent/libuv/pull/629  
     uv_queue_work(uv_default_loop(), &(baton->req),
-		  noop_work_func, AsyncMemwatchAfter);
+		  noop_work_func, (uv_after_work_cb)AsyncMemwatchAfter);
 
     scope.Close(Undefined());
 }
