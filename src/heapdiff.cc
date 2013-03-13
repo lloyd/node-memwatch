@@ -49,7 +49,6 @@ void
 heapdiff::HeapDiff::Initialize ( v8::Handle<v8::Object> target )
 {
     v8::HandleScope scope;
-
     v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(New);
     t->InstanceTemplate()->SetInternalFieldCount(1);
     t->SetClassName(String::NewSymbol("HeapDiff"));
@@ -62,6 +61,15 @@ heapdiff::HeapDiff::Initialize ( v8::Handle<v8::Object> target )
 v8::Handle<v8::Value>
 heapdiff::HeapDiff::New (const v8::Arguments& args)
 {
+    // Don't blow up when the caller says "new require('memwatch').HeapDiff()"
+    // issue #30
+    // stolen from: https://github.com/kkaefer/node-cpp-modules/commit/bd9432026affafd8450ecfd9b49b7dc647b6d348
+    if (!args.IsConstructCall()) {
+        return ThrowException(
+            Exception::TypeError(
+                String::New("Use the new operator to create instances of this object.")));
+    }
+
     v8::HandleScope scope;
 
     // allocate the underlying c++ class and wrap it up in the this pointer

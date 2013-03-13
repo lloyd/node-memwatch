@@ -53,3 +53,12 @@ describe('HeapDiff', function() {
     done();
   });
 });
+
+describe('improper HeapDiff allocation', function() {
+  it('should throw an exception', function(done) {
+    // equivalent to "new require('memwatch').HeapDiff()"
+    // see issue #30
+    (function() { new (memwatch.HeapDiff()); }).should.throw();
+    done();
+  });
+});
