@@ -1,3 +1,6 @@
+v0.2.2 -
+	* don't crash when a user accidentally allocates a HeapDiff without new (ala new require('memwatch').HeapDiff()) #30
+
 v0.2.1 -
 	* 0.10.0 support (thanks @rvagg and @tmuellerleile)
 	* improved windows build support (no longer requires sed in path, thanks @mscdex)
