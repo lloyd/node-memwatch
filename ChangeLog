@@ -1,3 +1,8 @@
+v0.2.1 -
+	* 0.10.0 support (thanks @rvagg and @tmuellerleile)
+	* improved windows build support (no longer requires sed in path, thanks @mscdex)
+	* work around a windows specific crash due to upstream "bug"  in libuv (https://github.com/joyent/libuv/pull/629)
+
 v0.2.0 -
 	* fix memory leak of snapshots in HeapDiff #15
 	* HeapDiff.end() throws an exception if invoked more than once.
