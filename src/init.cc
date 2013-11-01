@@ -8,17 +8,17 @@
 #include "heapdiff.hh"
 #include "memwatch.hh"
 
-extern "C" {
-    void init (v8::Handle<v8::Object> target)
-    {
-        v8::HandleScope scope;
-        heapdiff::HeapDiff::Initialize(target);
+using namespace v8;
 
-        NODE_SET_METHOD(target, "upon_gc", memwatch::upon_gc);
-        NODE_SET_METHOD(target, "gc", memwatch::trigger_gc);
+void init (Handle<Object> target)
+{
+    HandleScope scope;
+    heapdiff::HeapDiff::Initialize(target);
 
-        v8::V8::AddGCEpilogueCallback(memwatch::after_gc);
-    }
+    NODE_SET_METHOD(target, "upon_gc", memwatch::upon_gc);
+    NODE_SET_METHOD(target, "gc", memwatch::trigger_gc);
 
-    NODE_MODULE(memwatch, init);
-};
+    V8::AddGCEpilogueCallback(memwatch::after_gc);
+}
+
+NODE_MODULE(memwatch, init);
