@@ -233,8 +233,6 @@ void memwatch::after_gc(GCType type, GCCallbackFlags flags)
     // windows.  see: https://github.com/joyent/libuv/pull/629  
     uv_queue_work(uv_default_loop(), &(baton->req),
 		  noop_work_func, (uv_after_work_cb)AsyncMemwatchAfter);
-
-    scope.Close(Undefined());
 }
 
 Handle<Value> memwatch::upon_gc(const Arguments& args) {
