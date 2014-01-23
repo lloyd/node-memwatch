@@ -1,6 +1,10 @@
-const
-magic = require('./build/Release/memwatch'),
-events = require('events');
+const events = require('events');
+
+try {
+  var magic = require('./build/Release/memwatch');
+} catch (e) {
+  var magic = require('./build/Debug/memwatch');
+}
 
 module.exports = new events.EventEmitter();
 
