@@ -34,6 +34,6 @@
     "Justin Matthews (@jmatthewsr-ms)"
   ],
   "dependencies": {
-    "bindings": "^1.2.0"
+    "bindings": "~1.2.0"
   }
 }
