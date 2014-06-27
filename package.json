@@ -3,28 +3,37 @@
   "description": "Keep an eye on your memory usage, and discover and isolate leaks.",
   "version": "0.2.2",
   "author": "Lloyd Hilaiel (http://lloyd.io)",
-  "engines": { "node": ">= 0.6.0" },
+  "engines": {
+    "node": ">= 0.8.0"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/lloyd/node-memwatch.git"
   },
   "main": "include.js",
-  "licenses": [ { "type": "wtfpl" } ],
+  "licenses": [
+    {
+      "type": "wtfpl"
+    }
+  ],
   "bugs": {
-    "url" : "https://github.com/lloyd/node-memwatch/issues"
+    "url": "https://github.com/lloyd/node-memwatch/issues"
   },
   "scripts": {
     "install": "node-gyp rebuild",
-    "test": "mocha tests"
+    "test": "mocha tests --reporter spec"
   },
   "devDependencies": {
     "mocha": "1.2.2",
-    "should": "0.6.3",
-    "node-gyp": "0.5.7"
+    "should": "0.6.3"
   },
   "contributors": [
     "Jed Parsons (@jedp)",
     "Jeff Haynie (@jhaynie)",
     "Justin Matthews (@jmatthewsr-ms)"
-  ]
+  ],
+  "dependencies": {
+    "bindings": "^1.2.0",
+    "nan": "^1.2.0"
+  }
 }

@@ -21,7 +21,7 @@ using namespace v8;
 using namespace node;
 
 Handle<Object> g_context;
-Handle<Function> g_cb;
+NanCallback *g_cb;
 
 struct Baton {
     uv_work_t req;
@@ -67,29 +67,29 @@ static struct
 
 static Handle<Value> getLeakReport(size_t heapUsage)
 {
-    HandleScope scope;
+    NanEscapableScope();
 
     size_t growth = heapUsage - s_stats.leak_base_start;
     int now = time(NULL);
     int delta = now - s_stats.leak_time_start;
 
-    Local<Object> leakReport = Object::New();
-    leakReport->Set(String::New("start"), NODE_UNIXTIME_V8(s_stats.leak_time_start));
-    leakReport->Set(String::New("end"), NODE_UNIXTIME_V8(now));
-    leakReport->Set(String::New("growth"), Integer::New(growth));
+    Local<Object> leakReport = NanNew<v8::Object>();
+    //leakReport->Set(NanNew("start"), NODE_UNIXTIME_V8(s_stats.leak_time_start));
+    //leakReport->Set(NanNew("end"), NODE_UNIXTIME_V8(now));
+    leakReport->Set(NanNew("growth"), NanNew<v8::Number>(growth));
 
     std::stringstream ss;
     ss << "heap growth over 5 consecutive GCs ("
        << mw_util::niceDelta(delta) << ") - "
        << mw_util::niceSize(growth / ((double) delta / (60.0 * 60.0))) << "/hr";
 
-    leakReport->Set(String::New("reason"), String::New(ss.str().c_str()));
+    leakReport->Set(NanNew("reason"), NanNew(ss.str().c_str()));
 
-    return scope.Close(leakReport);
+    return NanEscapeScope(leakReport);
 }
 
 static void AsyncMemwatchAfter(uv_work_t* request) {
-    HandleScope scope;
+    NanScope();
 
     Baton * b = (Baton *) request->data;
 
@@ -121,11 +121,11 @@ static void AsyncMemwatchAfter(uv_work_t* request) {
 
                 // emit a leak report!
                 Handle<Value> argv[3];
-                argv[0] = Boolean::New(false);
+                argv[0] = NanNew<v8::Boolean>(false);
                 // the type of event to emit
-                argv[1] = String::New("leak");
+                argv[1] = NanNew("leak");
                 argv[2] = getLeakReport(b->heapUsage);
-                g_cb->Call(g_context, 3, argv);
+                g_cb->Call(3, argv);
             }
         } else {
             s_stats.consecutive_growth = 0;
@@ -171,37 +171,36 @@ static void AsyncMemwatchAfter(uv_work_t* request) {
         }
 
         // if there are any listeners, it's time to emit!
-        if (!g_cb.IsEmpty()) {
+        if (!g_cb->IsEmpty()) {
             Handle<Value> argv[3];
             // magic argument to indicate to the callback all we want to know is whether there are
             // listeners (here we don't)
-            argv[0] = Boolean::New(true);
+            argv[0] = NanNew<v8::Boolean>(true);
 
-            Handle<Value> haveListeners = g_cb->Call(g_context, 1, argv);
+            //Handle<Value> haveListeners = g_cb->call(1, argv);
 
-            if (haveListeners->BooleanValue()) {
-                double ut= 0.0;
-                if (s_stats.base_ancient) {
-                    ut = (double) ROUND(((double) (s_stats.base_recent - s_stats.base_ancient) /
-                                         (double) s_stats.base_ancient) * 1000.0) / 10.0;
-                }
 
-                // ok, there are listeners, we actually must serialize and emit this stats event
-                Local<Object> stats = Object::New();
-                stats->Set(String::New("num_full_gc"), Integer::New(s_stats.gc_full));
-                stats->Set(String::New("num_inc_gc"), Integer::New(s_stats.gc_inc));
-                stats->Set(String::New("heap_compactions"), Integer::New(s_stats.gc_compact));
-                stats->Set(String::New("usage_trend"), Number::New(ut));
-                stats->Set(String::New("estimated_base"), Integer::New(s_stats.base_recent));
-                stats->Set(String::New("current_base"), Integer::New(s_stats.last_base));
-                stats->Set(String::New("min"), Integer::New(s_stats.base_min));
-                stats->Set(String::New("max"), Integer::New(s_stats.base_max));
-                argv[0] = Boolean::New(false);
-                // the type of event to emit
-                argv[1] = String::New("stats");
-                argv[2] = stats;
-                g_cb->Call(g_context, 3, argv);
+            double ut= 0.0;
+            if (s_stats.base_ancient) {
+                ut = (double) ROUND(((double) (s_stats.base_recent - s_stats.base_ancient) /
+                                      (double) s_stats.base_ancient) * 1000.0) / 10.0;
             }
+
+            // ok, there are listeners, we actually must serialize and emit this stats event
+            Local<Object> stats = NanNew<v8::Object>();
+            stats->Set(NanNew("num_full_gc"), NanNew(s_stats.gc_full));
+            stats->Set(NanNew("num_inc_gc"), NanNew(s_stats.gc_inc));
+            stats->Set(NanNew("heap_compactions"), NanNew(s_stats.gc_compact));
+            stats->Set(NanNew("usage_trend"), NanNew(ut));
+            stats->Set(NanNew("estimated_base"), NanNew(s_stats.base_recent));
+            stats->Set(NanNew("current_base"), NanNew(s_stats.last_base));
+            stats->Set(NanNew("min"), NanNew(s_stats.base_min));
+            stats->Set(NanNew("max"), NanNew(s_stats.base_max));
+            argv[0] = NanNew<v8::Boolean>(false);
+            // the type of event to emit
+            argv[1] = NanNew("stats");
+            argv[2] = stats;
+            g_cb->Call(3, argv);
         }
     }
 
@@ -214,12 +213,12 @@ void memwatch::after_gc(GCType type, GCCallbackFlags flags)
 {
     if (heapdiff::HeapDiff::InProgress()) return;
 
-    HandleScope scope;
+    NanScope();
 
     Baton * baton = new Baton;
     v8::HeapStatistics hs;
 
-    v8::V8::GetHeapStatistics(&hs);
+    NanGetHeapStatistics(&hs);
 
     baton->heapUsage = hs.used_heap_size();
     baton->type = type;
@@ -227,27 +226,24 @@ void memwatch::after_gc(GCType type, GCCallbackFlags flags)
     baton->req.data = (void *) baton;
 
     // schedule our work to run in a moment, once gc has fully completed.
-    // 
-    // here we pass a noop work function to work around a flaw in libuv, 
+    //
+    // here we pass a noop work function to work around a flaw in libuv,
     // uv_queue_work on unix works fine, but will will crash on
-    // windows.  see: https://github.com/joyent/libuv/pull/629  
+    // windows.  see: https://github.com/joyent/libuv/pull/629
     uv_queue_work(uv_default_loop(), &(baton->req),
 		  noop_work_func, (uv_after_work_cb)AsyncMemwatchAfter);
-
-    scope.Close(Undefined());
 }
 
-Handle<Value> memwatch::upon_gc(const Arguments& args) {
-    HandleScope scope;
+NAN_METHOD(memwatch::upon_gc) {
+    NanScope();
     if (args.Length() >= 1 && args[0]->IsFunction()) {
-        g_cb = Persistent<Function>::New(Handle<Function>::Cast(args[0]));
-        g_context = Persistent<Object>::New(Context::GetCalling()->Global());
+        g_cb = new NanCallback(args[0].As<v8::Function>());
     }
-    return scope.Close(Undefined());
+    NanReturnValue(NanUndefined());
 }
 
-Handle<Value> memwatch::trigger_gc(const Arguments& args) {
-    HandleScope scope;
+NAN_METHOD(memwatch::trigger_gc) {
+    NanScope();
     while(!V8::IdleNotification()) {};
-    return scope.Close(Undefined());
+    NanReturnValue(NanUndefined());
 }
