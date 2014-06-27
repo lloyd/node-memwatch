@@ -1,12 +1,6 @@
 /*
  * 2012|lloyd|http://wtfpl.org
  */
-
-#include "heapdiff.hh"
-#include "util.hh"
-
-#include <node.h>
-
 #include <map>
 #include <string>
 #include <set>
@@ -15,6 +9,9 @@
 #include <stdlib.h> // abs()
 #include <time.h>   // time()
 
+#include "heapdiff.hh"
+#include "util.hh"
+
 using namespace v8;
 using namespace node;
 using namespace std;
@@ -22,7 +19,7 @@ using namespace std;
 static bool s_inProgress = false;
 static time_t s_startTime;
 
-bool heapdiff::HeapDiff::InProgress() 
+bool heapdiff::HeapDiff::InProgress()
 {
     return s_inProgress;
 }
@@ -48,29 +45,27 @@ heapdiff::HeapDiff::~HeapDiff()
 void
 heapdiff::HeapDiff::Initialize ( v8::Handle<v8::Object> target )
 {
-    v8::HandleScope scope;
-    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(New);
+    NanScope();
+
+    v8::Local<v8::FunctionTemplate> t = NanNew<v8::FunctionTemplate>(New);
     t->InstanceTemplate()->SetInternalFieldCount(1);
-    t->SetClassName(String::NewSymbol("HeapDiff"));
+    t->SetClassName(NanNew("HeapDiff"));
 
     NODE_SET_PROTOTYPE_METHOD(t, "end", End);
 
-    target->Set(v8::String::NewSymbol( "HeapDiff"), t->GetFunction());
+    target->Set(NanNew( "HeapDiff"), t->GetFunction());
 }
 
-v8::Handle<v8::Value>
-heapdiff::HeapDiff::New (const v8::Arguments& args)
+NAN_METHOD(heapdiff::HeapDiff::New)
 {
     // Don't blow up when the caller says "new require('memwatch').HeapDiff()"
     // issue #30
     // stolen from: https://github.com/kkaefer/node-cpp-modules/commit/bd9432026affafd8450ecfd9b49b7dc647b6d348
     if (!args.IsConstructCall()) {
-        return ThrowException(
-            Exception::TypeError(
-                String::New("Use the new operator to create instances of this object.")));
+        return NanThrowTypeError("Use the new operator to create instances of this object.");
     }
 
-    v8::HandleScope scope;
+    NanScope();
 
     // allocate the underlying c++ class and wrap it up in the this pointer
     HeapDiff * self = new HeapDiff();
@@ -79,22 +74,28 @@ heapdiff::HeapDiff::New (const v8::Arguments& args)
     // take a snapshot and save a pointer to it
     s_inProgress = true;
     s_startTime = time(NULL);
-    self->before = v8::HeapProfiler::TakeSnapshot(v8::String::New(""));
+
+#if (NODE_MODULE_VERSION > 0x000B)
+    self->before = v8::Isolate::GetCurrent()->GetHeapProfiler()->TakeHeapSnapshot(NanNew<v8::String>(""), NULL);
+#else
+    self->before = v8::HeapProfiler::TakeSnapshot(NanNew<v8::String>(""), HeapSnapshot::kFull, NULL);
+#endif
+
     s_inProgress = false;
 
-    return args.This();
+    NanReturnValue(args.This());
 }
 
 static string handleToStr(const Handle<Value> & str)
 {
 	String::Utf8Value utfString(str->ToString());
-	return *utfString;   
+	return *utfString;
 }
 
 static void
 buildIDSet(set<uint64_t> * seen, const HeapGraphNode* cur, int & s)
 {
-    v8::HandleScope scope;
+    NanScope();
 
     // cycle detection
     if (seen->find(cur->GetId()) != seen->end()) {
@@ -210,66 +211,66 @@ static void manageChange(changeset & changes, const HeapGraphNode * node, bool a
 
 static Handle<Value> changesetToObject(changeset & changes)
 {
-    v8::HandleScope scope;
-    Local<Array> a = Array::New();
+    NanEscapableScope();
+    Local<Array> a = NanNew<v8::Array>();
 
     for (changeset::iterator i = changes.begin(); i != changes.end(); i++) {
-        Local<Object> d = Object::New();
-        d->Set(String::New("what"), String::New(i->first.c_str()));
-        d->Set(String::New("size_bytes"), Integer::New(i->second.size));
-        d->Set(String::New("size"), String::New(mw_util::niceSize(i->second.size).c_str()));
-        d->Set(String::New("+"), Integer::New(i->second.added));
-        d->Set(String::New("-"), Integer::New(i->second.released));
+        Local<Object> d = NanNew<v8::Object>();
+        d->Set(NanNew("what"), NanNew(i->first.c_str()));
+        d->Set(NanNew("size_bytes"), NanNew<v8::Number>(i->second.size));
+        d->Set(NanNew("size"), NanNew(mw_util::niceSize(i->second.size).c_str()));
+        d->Set(NanNew("+"), NanNew<v8::Number>(i->second.added));
+        d->Set(NanNew("-"), NanNew<v8::Number>(i->second.released));
         a->Set(a->Length(), d);
     }
 
-    return scope.Close(a);
+    return NanEscapeScope(a);
 }
 
 
 static v8::Handle<Value>
 compare(const v8::HeapSnapshot * before, const v8::HeapSnapshot * after)
 {
-    v8::HandleScope scope;
+    NanEscapableScope();
     int s, diffBytes;
 
-    Local<Object> o = Object::New();
+    Local<Object> o = NanNew<v8::Object>();
 
     // first let's append summary information
-    Local<Object> b = Object::New();
-    b->Set(String::New("nodes"), Integer::New(before->GetNodesCount()));
-    b->Set(String::New("time"), NODE_UNIXTIME_V8(s_startTime));
-    o->Set(String::New("before"), b);
+    Local<Object> b = NanNew<v8::Object>();
+    b->Set(NanNew("nodes"), NanNew(before->GetNodesCount()));
+    //b->Set(NanNew("time"), s_startTime);
+    o->Set(NanNew("before"), b);
 
-    Local<Object> a = Object::New();
-    a->Set(String::New("nodes"), Integer::New(after->GetNodesCount()));
-    a->Set(String::New("time"), NODE_UNIXTIME_V8(time(NULL)));
-    o->Set(String::New("after"), a);
+    Local<Object> a = NanNew<v8::Object>();
+    a->Set(NanNew("nodes"), NanNew(after->GetNodesCount()));
+    //a->Set(NanNew("time"), time(NULL));
+    o->Set(NanNew("after"), a);
 
     // now let's get allocations by name
     set<uint64_t> beforeIDs, afterIDs;
     s = 0;
     buildIDSet(&beforeIDs, before->GetRoot(), s);
-    b->Set(String::New("size_bytes"), Integer::New(s));
-    b->Set(String::New("size"), String::New(mw_util::niceSize(s).c_str()));
+    b->Set(NanNew("size_bytes"), NanNew(s));
+    b->Set(NanNew("size"), NanNew(mw_util::niceSize(s).c_str()));
 
     diffBytes = s;
     s = 0;
     buildIDSet(&afterIDs, after->GetRoot(), s);
-    a->Set(String::New("size_bytes"), Integer::New(s));
-    a->Set(String::New("size"), String::New(mw_util::niceSize(s).c_str()));
+    a->Set(NanNew("size_bytes"), NanNew(s));
+    a->Set(NanNew("size"), NanNew(mw_util::niceSize(s).c_str()));
 
     diffBytes = s - diffBytes;
 
-    Local<Object> c = Object::New();
-    c->Set(String::New("size_bytes"), Integer::New(diffBytes));
-    c->Set(String::New("size"), String::New(mw_util::niceSize(diffBytes).c_str()));
-    o->Set(String::New("change"), c);
+    Local<Object> c = NanNew<v8::Object>();
+    c->Set(NanNew("size_bytes"), NanNew(diffBytes));
+    c->Set(NanNew("size"), NanNew(mw_util::niceSize(diffBytes).c_str()));
+    o->Set(NanNew("change"), c);
 
     // before - after will reveal nodes released (memory freed)
     vector<uint64_t> changedIDs;
     setDiff(beforeIDs, afterIDs, changedIDs);
-    c->Set(String::New("freed_nodes"), Integer::New(changedIDs.size()));
+    c->Set(NanNew("freed_nodes"), NanNew<v8::Number>(changedIDs.size()));
 
     // here's where we'll collect all the summary information
     changeset changes;
@@ -285,23 +286,22 @@ compare(const v8::HeapSnapshot * before, const v8::HeapSnapshot * after)
     // after - before will reveal nodes added (memory allocated)
     setDiff(afterIDs, beforeIDs, changedIDs);
 
-    c->Set(String::New("allocated_nodes"), Integer::New(changedIDs.size()));
+    c->Set(NanNew("allocated_nodes"), NanNew<v8::Number>(changedIDs.size()));
 
     for (unsigned long i = 0; i < changedIDs.size(); i++) {
         const HeapGraphNode * n = after->GetNodeById(changedIDs[i]);
         manageChange(changes, n, true);
     }
 
-    c->Set(String::New("details"), changesetToObject(changes));
+    c->Set(NanNew("details"), changesetToObject(changes));
 
-    return scope.Close(o);
+    return NanEscapeScope(o);
 }
 
-v8::Handle<Value>
-heapdiff::HeapDiff::End( const Arguments& args )
+NAN_METHOD(heapdiff::HeapDiff::End)
 {
     // take another snapshot and compare them
-    v8::HandleScope scope;
+    NanScope();
 
     HeapDiff *t = Unwrap<HeapDiff>( args.This() );
 
@@ -309,15 +309,16 @@ heapdiff::HeapDiff::End( const Arguments& args )
     // approach seems to be an exception, cause nothing else makes
     // sense.
     if (t->ended) {
-        return v8::ThrowException(
-            v8::Exception::Error(
-                v8::String::New("attempt to end() a HeapDiff that was "
-                                "already ended")));
+        return NanThrowError("attempt to end() a HeapDiff that was already ended");
     }
     t->ended = true;
 
     s_inProgress = true;
-    t->after = v8::HeapProfiler::TakeSnapshot(v8::String::New(""));
+#if (NODE_MODULE_VERSION > 0x000B)
+    t->after = v8::Isolate::GetCurrent()->GetHeapProfiler()->TakeHeapSnapshot(NanNew<v8::String>(""), NULL);
+#else
+    t->after = v8::HeapProfiler::TakeSnapshot(NanNew<v8::String>(""), HeapSnapshot::kFull, NULL);
+#endif
     s_inProgress = false;
 
     v8::Handle<Value> comparison = compare(t->before, t->after);
@@ -328,5 +329,5 @@ heapdiff::HeapDiff::End( const Arguments& args )
     ((HeapSnapshot *) t->after)->Delete();
     t->after = NULL;
 
-    return scope.Close(comparison);
+    NanReturnValue(comparison);
 }
