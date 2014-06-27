@@ -213,7 +213,7 @@ void memwatch::after_gc(GCType type, GCCallbackFlags flags)
 {
     if (heapdiff::HeapDiff::InProgress()) return;
 
-    NanEscapableScope();
+    NanScope();
 
     Baton * baton = new Baton;
     v8::HeapStatistics hs;
@@ -232,8 +232,6 @@ void memwatch::after_gc(GCType type, GCCallbackFlags flags)
     // windows.  see: https://github.com/joyent/libuv/pull/629
     uv_queue_work(uv_default_loop(), &(baton->req),
 		  noop_work_func, (uv_after_work_cb)AsyncMemwatchAfter);
-
-    NanEscapeScope(NanUndefined());
 }
 
 NAN_METHOD(memwatch::upon_gc) {
