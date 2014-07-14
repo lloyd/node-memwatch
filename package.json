@@ -17,6 +17,9 @@
     "install": "node-gyp rebuild",
     "test": "mocha tests"
   },
+  "dependencies": {
+    "bindings": "~1.2.1"
+  },
   "devDependencies": {
     "mocha": "1.2.2",
     "should": "0.6.3",
