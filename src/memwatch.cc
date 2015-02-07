@@ -244,6 +244,6 @@ NAN_METHOD(memwatch::upon_gc) {
 
 NAN_METHOD(memwatch::trigger_gc) {
     NanScope();
-    while(!V8::IdleNotification()) {};
+    while(!V8::Isolate::GetCurrent()->IdleNotification(0)) {};
     NanReturnValue(NanUndefined());
 }
