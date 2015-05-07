@@ -1,7 +1,7 @@
 {
   "name": "memwatch-next",
   "description": "Keep an eye on your memory usage, and discover and isolate leaks.",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "author": "Lloyd Hilaiel (http://lloyd.io)",
   "engines": {
     "node": ">= 0.8.0"
@@ -34,6 +34,6 @@
   ],
   "dependencies": {
     "bindings": "^1.2.0",
-    "nan": "^1.6.0"
+    "nan": "^1.8.0"
   }
 }
