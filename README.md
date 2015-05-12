@@ -23,7 +23,7 @@ Installation
 
 or
 
-- `git clone git://github.com/lloyd/node-memwatch.git`
+- `git clone git://github.com/marcominetti/node-memwatch.git`
 
 
 Description
@@ -37,7 +37,7 @@ instrumentation.  This module attempts to satisfy that need.
 To get started, import `node-memwatch` like so:
 
 ```javascript
-var memwatch = require('memwatch');
+var memwatch = require('memwatch-next');
 ```
 
 ### Leak Detection
