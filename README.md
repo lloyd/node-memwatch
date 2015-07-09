@@ -19,7 +19,7 @@ Node.JS code.  It provides:
 Installation
 ------------
 
-- `npm install memwatch`
+- `npm install memwatch-next`
 
 or
 
