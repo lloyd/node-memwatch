@@ -14,3 +14,4 @@ node_js:
  - "iojs-v1.7"
  - "iojs-v1.8"
  - "iojs-v2.0"
+ - "iojs-v3.0"
