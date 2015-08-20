@@ -34,6 +34,6 @@
   ],
   "dependencies": {
     "bindings": "^1.2.0",
-    "nan": "^1.8.0"
+    "nan": "^2.0.0"
   }
 }
