@@ -65,7 +65,7 @@ static struct
     unsigned int consecutive_growth;
 } s_stats;
 
-static Handle<Value> getLeakReport(size_t heapUsage)
+static Local<Value> getLeakReport(size_t heapUsage)
 {
     Nan::EscapableHandleScope scope;
 
@@ -120,7 +120,7 @@ static void AsyncMemwatchAfter(uv_work_t* request) {
                 s_stats.consecutive_growth = 0;
 
                 // emit a leak report!
-                Handle<Value> argv[3];
+                Local<Value> argv[3];
                 argv[0] = Nan::New<v8::Boolean>(false);
                 // the type of event to emit
                 argv[1] = Nan::New("leak").ToLocalChecked();
@@ -172,7 +172,7 @@ static void AsyncMemwatchAfter(uv_work_t* request) {
 
         // if there are any listeners, it's time to emit!
         if (!g_cb->IsEmpty()) {
-            Handle<Value> argv[3];
+            Local<Value> argv[3];
             // magic argument to indicate to the callback all we want to know is whether there are
             // listeners (here we don't)
             argv[0] = Nan::New<v8::Boolean>(true);

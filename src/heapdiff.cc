@@ -113,8 +113,11 @@ buildIDSet(set<uint64_t> * seen, const HeapGraphNode* cur, int & s)
     }
 
     // update memory usage as we go
+#if (NODE_MODULE_VERSION >= 0x002D)
     s += cur->GetShallowSize();
-
+#else
+    s += cur->GetSelfSize();
+#endif
     seen->insert(cur->GetId());
 
     for (int i=0; i < cur->GetChildrenCount(); i++) {
@@ -204,7 +207,11 @@ static void manageChange(changeset & changes, const HeapGraphNode * node, bool a
 
     changeset::iterator i = changes.find(type);
 
+#if (NODE_MODULE_VERSION >= 0x002D)
     i->second.size += node->GetShallowSize() * (added ? 1 : -1);
+#else
+    i->second.size += node->GetSelfSize() * (added ? 1 : -1);
+#endif
     if (added) i->second.added++;
     else i->second.released++;
 
@@ -232,7 +239,7 @@ static Handle<Value> changesetToObject(changeset & changes)
 }
 
 
-static v8::Handle<Value>
+static v8::Local<Value>
 compare(const v8::HeapSnapshot * before, const v8::HeapSnapshot * after)
 {
     Nan::EscapableHandleScope scope;
@@ -329,7 +336,7 @@ NAN_METHOD(heapdiff::HeapDiff::End)
 #endif
     s_inProgress = false;
 
-    v8::Handle<Value> comparison = compare(t->before, t->after);
+    v8::Local<Value> comparison = compare(t->before, t->after);
     // free early, free often.  I mean, after all, this process we're in is
     // probably having memory problems.  We want to help her.
     ((HeapSnapshot *) t->before)->Delete();
