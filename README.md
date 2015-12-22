@@ -136,6 +136,7 @@ The contents of `diff` will look something like:
       }
     ]
   }
+}
 ```
 
 The diff shows that during the sample period, the total number of
