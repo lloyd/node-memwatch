@@ -21,7 +21,7 @@ using namespace v8;
 using namespace node;
 
 Handle<Object> g_context;
-Handle<Function> g_cb;
+Nan::Callback *g_cb;
 
 struct Baton {
     uv_work_t req;
@@ -65,31 +65,31 @@ static struct
     unsigned int consecutive_growth;
 } s_stats;
 
-static Handle<Value> getLeakReport(size_t heapUsage)
+static Local<Value> getLeakReport(size_t heapUsage)
 {
-    HandleScope scope;
+    Nan::EscapableHandleScope scope;
 
     size_t growth = heapUsage - s_stats.leak_base_start;
     int now = time(NULL);
     int delta = now - s_stats.leak_time_start;
 
-    Local<Object> leakReport = Object::New();
-    leakReport->Set(String::New("start"), NODE_UNIXTIME_V8(s_stats.leak_time_start));
-    leakReport->Set(String::New("end"), NODE_UNIXTIME_V8(now));
-    leakReport->Set(String::New("growth"), Integer::New(growth));
+    Local<Object> leakReport = Nan::New<v8::Object>();
+    //leakReport->Set(Nan::New("start").ToLocalChecked(), NODE_UNIXTIME_V8(s_stats.leak_time_start));
+    //leakReport->Set(Nan::New("end").ToLocalChecked(), NODE_UNIXTIME_V8(now));
+    leakReport->Set(Nan::New("growth").ToLocalChecked(), Nan::New<v8::Number>(growth));
 
     std::stringstream ss;
     ss << "heap growth over 5 consecutive GCs ("
        << mw_util::niceDelta(delta) << ") - "
        << mw_util::niceSize(growth / ((double) delta / (60.0 * 60.0))) << "/hr";
 
-    leakReport->Set(String::New("reason"), String::New(ss.str().c_str()));
+    leakReport->Set(Nan::New("reason").ToLocalChecked(), Nan::New(ss.str().c_str()).ToLocalChecked());
 
-    return scope.Close(leakReport);
+    return scope.Escape(leakReport);
 }
 
 static void AsyncMemwatchAfter(uv_work_t* request) {
-    HandleScope scope;
+    Nan::HandleScope scope;
 
     Baton * b = (Baton *) request->data;
 
@@ -120,12 +120,12 @@ static void AsyncMemwatchAfter(uv_work_t* request) {
                 s_stats.consecutive_growth = 0;
 
                 // emit a leak report!
-                Handle<Value> argv[3];
-                argv[0] = Boolean::New(false);
+                Local<Value> argv[3];
+                argv[0] = Nan::New<v8::Boolean>(false);
                 // the type of event to emit
-                argv[1] = String::New("leak");
+                argv[1] = Nan::New("leak").ToLocalChecked();
                 argv[2] = getLeakReport(b->heapUsage);
-                g_cb->Call(g_context, 3, argv);
+                g_cb->Call(3, argv);
             }
         } else {
             s_stats.consecutive_growth = 0;
@@ -171,37 +171,36 @@ static void AsyncMemwatchAfter(uv_work_t* request) {
         }
 
         // if there are any listeners, it's time to emit!
-        if (!g_cb.IsEmpty()) {
-            Handle<Value> argv[3];
+        if (!g_cb->IsEmpty()) {
+            Local<Value> argv[3];
             // magic argument to indicate to the callback all we want to know is whether there are
             // listeners (here we don't)
-            argv[0] = Boolean::New(true);
+            argv[0] = Nan::New<v8::Boolean>(true);
 
-            Handle<Value> haveListeners = g_cb->Call(g_context, 1, argv);
+            //Handle<Value> haveListeners = g_cb->call(1, argv);
 
-            if (haveListeners->BooleanValue()) {
-                double ut= 0.0;
-                if (s_stats.base_ancient) {
-                    ut = (double) ROUND(((double) (s_stats.base_recent - s_stats.base_ancient) /
-                                         (double) s_stats.base_ancient) * 1000.0) / 10.0;
-                }
 
-                // ok, there are listeners, we actually must serialize and emit this stats event
-                Local<Object> stats = Object::New();
-                stats->Set(String::New("num_full_gc"), Integer::New(s_stats.gc_full));
-                stats->Set(String::New("num_inc_gc"), Integer::New(s_stats.gc_inc));
-                stats->Set(String::New("heap_compactions"), Integer::New(s_stats.gc_compact));
-                stats->Set(String::New("usage_trend"), Number::New(ut));
-                stats->Set(String::New("estimated_base"), Integer::New(s_stats.base_recent));
-                stats->Set(String::New("current_base"), Integer::New(s_stats.last_base));
-                stats->Set(String::New("min"), Integer::New(s_stats.base_min));
-                stats->Set(String::New("max"), Integer::New(s_stats.base_max));
-                argv[0] = Boolean::New(false);
-                // the type of event to emit
-                argv[1] = String::New("stats");
-                argv[2] = stats;
-                g_cb->Call(g_context, 3, argv);
+            double ut= 0.0;
+            if (s_stats.base_ancient) {
+                ut = (double) ROUND(((double) (s_stats.base_recent - s_stats.base_ancient) /
+                                      (double) s_stats.base_ancient) * 1000.0) / 10.0;
             }
+
+            // ok, there are listeners, we actually must serialize and emit this stats event
+            Local<Object> stats = Nan::New<v8::Object>();
+            stats->Set(Nan::New("num_full_gc").ToLocalChecked(), Nan::New(s_stats.gc_full));
+            stats->Set(Nan::New("num_inc_gc").ToLocalChecked(), Nan::New(s_stats.gc_inc));
+            stats->Set(Nan::New("heap_compactions").ToLocalChecked(), Nan::New(s_stats.gc_compact));
+            stats->Set(Nan::New("usage_trend").ToLocalChecked(), Nan::New(ut));
+            stats->Set(Nan::New("estimated_base").ToLocalChecked(), Nan::New(s_stats.base_recent));
+            stats->Set(Nan::New("current_base").ToLocalChecked(), Nan::New(s_stats.last_base));
+            stats->Set(Nan::New("min").ToLocalChecked(), Nan::New(s_stats.base_min));
+            stats->Set(Nan::New("max").ToLocalChecked(), Nan::New(s_stats.base_max));
+            argv[0] = Nan::New<v8::Boolean>(false);
+            // the type of event to emit
+            argv[1] = Nan::New("stats").ToLocalChecked();
+            argv[2] = stats;
+            g_cb->Call(3, argv);
         }
     }
 
@@ -214,12 +213,12 @@ void memwatch::after_gc(GCType type, GCCallbackFlags flags)
 {
     if (heapdiff::HeapDiff::InProgress()) return;
 
-    HandleScope scope;
+    Nan::HandleScope scope;
 
     Baton * baton = new Baton;
     v8::HeapStatistics hs;
 
-    v8::V8::GetHeapStatistics(&hs);
+    Nan::GetHeapStatistics(&hs);
 
     baton->heapUsage = hs.used_heap_size();
     baton->type = type;
@@ -227,27 +226,34 @@ void memwatch::after_gc(GCType type, GCCallbackFlags flags)
     baton->req.data = (void *) baton;
 
     // schedule our work to run in a moment, once gc has fully completed.
-    // 
-    // here we pass a noop work function to work around a flaw in libuv, 
+    //
+    // here we pass a noop work function to work around a flaw in libuv,
     // uv_queue_work on unix works fine, but will will crash on
-    // windows.  see: https://github.com/joyent/libuv/pull/629  
+    // windows.  see: https://github.com/joyent/libuv/pull/629
     uv_queue_work(uv_default_loop(), &(baton->req),
 		  noop_work_func, (uv_after_work_cb)AsyncMemwatchAfter);
-
-    scope.Close(Undefined());
 }
 
-Handle<Value> memwatch::upon_gc(const Arguments& args) {
-    HandleScope scope;
-    if (args.Length() >= 1 && args[0]->IsFunction()) {
-        g_cb = Persistent<Function>::New(Handle<Function>::Cast(args[0]));
-        g_context = Persistent<Object>::New(Context::GetCalling()->Global());
+NAN_METHOD(memwatch::upon_gc) {
+    Nan::HandleScope scope;
+    if (info.Length() >= 1 && info[0]->IsFunction()) {
+        g_cb = new Nan::Callback(info[0].As<v8::Function>());
     }
-    return scope.Close(Undefined());
+    info.GetReturnValue().Set(Nan::Undefined());
 }
 
-Handle<Value> memwatch::trigger_gc(const Arguments& args) {
-    HandleScope scope;
-    while(!V8::IdleNotification()) {};
-    return scope.Close(Undefined());
+NAN_METHOD(memwatch::trigger_gc) {
+    Nan::HandleScope scope;
+    int deadline_in_ms = 500;
+    if (info.Length() >= 1 && info[0]->IsNumber()) {
+    		deadline_in_ms = (int)(info[0]->Int32Value()); 
+    }
+#if (NODE_MODULE_VERSION >= 0x002D)
+    Nan::IdleNotification(deadline_in_ms);
+    Nan::LowMemoryNotification();
+#else
+    while(!Nan::IdleNotification(deadline_in_ms)) {};
+    Nan::LowMemoryNotification();
+#endif
+    info.GetReturnValue().Set(Nan::Undefined());
 }

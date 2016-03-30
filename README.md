@@ -3,6 +3,12 @@
 
 [![Build Status](https://secure.travis-ci.org/lloyd/node-memwatch.png)](http://travis-ci.org/lloyd/node-memwatch)
 
+## This repo is no longer maintained. 
+
+Use [`memwatch-next`](https://github.com/marcominetti/node-memwatch) for Node versions above 0.10.x. 
+
+------
+
 `node-memwatch` is here to help you detect and find memory leaks in
 Node.JS code.  It provides:
 
