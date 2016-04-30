@@ -1,7 +1,7 @@
 {
   "name": "memwatch-next",
   "description": "Keep an eye on your memory usage, and discover and isolate leaks.",
-  "version": "0.2.10",
+  "version": "0.3.0",
   "author": "Lloyd Hilaiel (http://lloyd.io)",
   "engines": {
     "node": ">= 0.8.0"
@@ -24,8 +24,8 @@
     "test": "mocha tests --reporter spec"
   },
   "devDependencies": {
-    "mocha": "1.2.2",
-    "should": "0.6.3"
+    "mocha": "^2.4.5",
+    "should": "^8.3.1"
   },
   "contributors": [
     "Jed Parsons (@jedp)",
@@ -33,7 +33,7 @@
     "Justin Matthews (@jmatthewsr-ms)"
   ],
   "dependencies": {
-    "bindings": "^1.2.0",
-    "nan": "^2.0.0"
+    "bindings": "^1.2.1",
+    "nan": "^2.3.2"
   }
 }
