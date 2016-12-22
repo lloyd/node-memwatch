@@ -97,7 +97,8 @@ is continuously growing and you might have a leak.
 V8 has its own idea of when it's best to perform a GC, and under a
 heavy load, it may defer this action for some time.  To aid in
 speedier debugging, `memwatch` provides a `gc()` method to force V8 to
-do a full GC and heap compaction.
+do a full GC and heap compaction (to activate this feature, start node 
+with `--expose-gc`)
 
 
 ### Heap Diffing
