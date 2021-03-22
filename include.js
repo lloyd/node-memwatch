@@ -1,5 +1,5 @@
 const
-magic = require('./build/Release/memwatch'),
+magic = require('bindings')('memwatch'),
 events = require('events');
 
 module.exports = new events.EventEmitter();

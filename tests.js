@@ -15,7 +15,7 @@ describe('the library', function() {
 describe('calling .gc()', function() {
   it('should cause a stats() event to be emitted', function(done) {
     memwatch.once('stats', function(s) {
-      s.should.be.a('object');
+      s.should.be.object;
       done();
     });
     memwatch.gc();
