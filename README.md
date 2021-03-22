@@ -1,3 +1,5 @@
+# DEPRECATED
+
 `node-memwatch`: Leak Detection and Heap Diffing for Node.JS
 ============================================================
 
