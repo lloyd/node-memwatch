@@ -1,7 +1,12 @@
+# This project is DEPRECATED
+
+See https://github.com/airbnb/node-memwatch for an actively maintained fork.
+
+
 `node-memwatch`: Leak Detection and Heap Diffing for Node.JS
 ============================================================
 
-[![Build Status](https://secure.travis-ci.org/lloyd/node-memwatch.png)](http://travis-ci.org/lloyd/node-memwatch)
+[![Build Status](https://travis-ci.org/deepak1556/node-memwatch.svg?branch=master)](https://travis-ci.org/deepak1556/node-memwatch)
 
 `node-memwatch` is here to help you detect and find memory leaks in
 Node.JS code.  It provides:
@@ -19,11 +24,11 @@ Node.JS code.  It provides:
 Installation
 ------------
 
-- `npm install memwatch`
+- `npm install memwatch-next`
 
 or
 
-- `git clone git://github.com/lloyd/node-memwatch.git`
+- `git clone git://github.com/marcominetti/node-memwatch.git`
 
 
 Description
@@ -37,7 +42,7 @@ instrumentation.  This module attempts to satisfy that need.
 To get started, import `node-memwatch` like so:
 
 ```javascript
-var memwatch = require('memwatch');
+var memwatch = require('memwatch-next');
 ```
 
 ### Leak Detection
@@ -63,7 +68,7 @@ The `info` object will look something like:
 ### Heap Usage
 
 The best way to evaluate your memory footprint is to look at heap
-usage right aver V8 performs garbage collection.  `memwatch` does
+usage right after V8 performs garbage collection.  `memwatch` does
 exactly this - it checks heap usage only after GC to give you a stable
 baseline of your actual memory usage.
 
@@ -136,6 +141,7 @@ The contents of `diff` will look something like:
       }
     ]
   }
+}
 ```
 
 The diff shows that during the sample period, the total number of
@@ -156,4 +162,4 @@ Please see the Issues to share suggestions and contribute!
 License
 -------
 
-http://wtfpl.org
+http://wtfpl.net
