@@ -1,4 +1,7 @@
-# DEPRECATED
+# This project is DEPRECATED
+
+See https://github.com/airbnb/node-memwatch for an actively maintained fork.
+
 
 `node-memwatch`: Leak Detection and Heap Diffing for Node.JS
 ============================================================
